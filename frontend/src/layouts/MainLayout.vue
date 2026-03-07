@@ -29,18 +29,18 @@ function handleDriveSelect(id: string) {
 <template>
   <div class="h-screen flex flex-col bg-[#f0f4f9] font-sans">
     <!-- Top bar -->
-    <header class="flex items-center gap-4 px-5 h-16 shrink-0">
-      <div class="flex items-center gap-2.5 w-[240px]">
-        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+    <header class="flex items-center px-5 h-16 shrink-0">
+      <div class="flex items-center gap-2.5 w-57.5">
+        <div class="w-10 h-10 bg-linear-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
           <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2v11z"/>
           </svg>
         </div>
-        <span class="text-[22px] text-gray-700 font-medium tracking-tight">Drive</span>
+        <span class="text-[20px] text-gray-700 font-medium tracking-tight font-['New_Amsterdam']">MY FLYDRIVE</span>
       </div>
 
       <!-- Search bar -->
-      <div class="flex-1 max-w-[720px]">
+      <div class="flex-1 max-w-180">
         <div class="flex items-center bg-[#dfe3e8] rounded-full px-5 h-12 hover:bg-[#d3d8de] hover:shadow-sm transition-all focus-within:bg-white focus-within:shadow-md">
           <HugeiconsIcon :icon="Search01Icon" class="text-gray-500 mr-3" :size="20" />
           <input
@@ -81,7 +81,7 @@ function handleDriveSelect(id: string) {
       </aside>
 
       <!-- Main content -->
-      <main class="flex-1 bg-white rounded-2xl overflow-y-auto shadow-sm">
+      <main class="flex-1 bg-white rounded-2xl overflow-y-auto">
         <RouterView />
       </main>
     </div>

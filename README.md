@@ -81,7 +81,7 @@ The app runs at `http://localhost:3000`.
 Pre-built images are available from GitHub Container Registry:
 
 ```bash
-docker pull ghcr.io/zinkyawkyaw/my-drive:main
+docker pull ghcr.io/necessarylion/my-flydrive:main
 ```
 
 ## Supported Storage Providers

@@ -1,12 +1,14 @@
 services:
-  my-drive:
-    build: .
+  my-flydrive:
+    image: ghcr.io/necessarylion/my-flydrive:main
+    # build: .  # uncomment to build locally instead
     ports:
       - "3000:3000"
     environment:
       - ADMIN_EMAIL=admin@drive.com
       - ADMIN_PASSWORD=changeme
       - JWT_SECRET=change-this-to-a-random-secret-key
+      - APP_DOMAIN=https://my-flydrive.app.com
     volumes:
       - drive-data:/app/data
       - drive-uploads:/app/uploads

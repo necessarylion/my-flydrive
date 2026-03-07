@@ -23,14 +23,23 @@ files.get("/:driveId/list", async (c) => {
     const items: FileItem[] = [];
     const listing = await disk.listAll(prefix, { recursive: false });
 
+    const metaPromises: Promise<void>[] = [];
+
     for (const item of listing.objects) {
       if (item.isFile) {
         if (item.name === ".keep") continue;
-        items.push({
+        const fileItem: FileItem = {
           name: item.name,
           path: item.key,
           isDirectory: false,
-        });
+        };
+        items.push(fileItem);
+        metaPromises.push(
+          item.getMetaData().then((meta) => {
+            fileItem.size = meta.contentLength;
+            fileItem.lastModified = meta.lastModified.toISOString();
+          }).catch(() => {})
+        );
       } else {
         items.push({
           name: item.name,
@@ -39,6 +48,8 @@ files.get("/:driveId/list", async (c) => {
         });
       }
     }
+
+    await Promise.all(metaPromises);
 
     return c.json({ path: prefix, items });
   } catch (err: any) {

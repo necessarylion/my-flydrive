@@ -107,6 +107,13 @@ function getFileIconColor(name: string) {
   return 'text-blue-500'
 }
 
+function formatDate(iso?: string) {
+  if (!iso) return '\u2014'
+  const d = new Date(iso)
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+    + ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+}
+
 function formatSize(bytes?: number) {
   if (bytes == null) return '\u2014'
   if (bytes < 1024) return bytes + ' B'
@@ -156,11 +163,7 @@ function formatSize(bytes?: number) {
 
     <!-- File table -->
     <div v-else class="flex-1 overflow-y-auto">
-      <div class="px-6 pt-5 pb-2">
-        <h2 class="text-sm font-medium text-gray-900">Files</h2>
-      </div>
-
-      <table class="w-full">
+      <table class="w-full mt-2">
         <thead>
           <tr class="text-xs text-gray-500 font-medium">
             <th class="text-left pl-6 pr-4 py-2">Name</th>
@@ -211,7 +214,7 @@ function formatSize(bytes?: number) {
                 <span class="text-sm text-gray-800">{{ item.name }}</span>
               </div>
             </td>
-            <td class="px-4 py-2 text-xs text-gray-500">{{ item.lastModified || '\u2014' }}</td>
+            <td class="px-4 py-2 text-xs text-gray-500">{{ formatDate(item.lastModified) }}</td>
             <td class="px-4 py-2 text-xs text-gray-500">{{ item.isDirectory ? '\u2014' : formatSize(item.size) }}</td>
             <td class="pr-6 py-2" @click.stop>
               <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
