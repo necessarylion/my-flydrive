@@ -1,0 +1,17 @@
+services:
+  my-drive:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - ADMIN_EMAIL=admin@drive.com
+      - ADMIN_PASSWORD=changeme
+      - JWT_SECRET=change-this-to-a-random-secret-key
+    volumes:
+      - drive-data:/app/data
+      - drive-uploads:/app/uploads
+    restart: unless-stopped
+
+volumes:
+  drive-data:
+  drive-uploads:

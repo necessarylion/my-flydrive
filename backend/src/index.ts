@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { swaggerUI } from "@hono/swagger-ui";
+import { serveStatic } from "hono/bun";
 import { corsMiddleware } from "./middleware/cors";
 import { jwtMiddleware } from "./middleware/auth";
 import authRoutes from "./routes/auth";
@@ -210,6 +211,9 @@ app.get("/openapi.json", (c) => {
 app.route("/api/drives", drives);
 app.route("/api/files", files);
 
+// Serve frontend static files in production
+app.use("/*", serveStatic({ root: "./public" }));
+app.get("/*", serveStatic({ root: "./public", path: "index.html" }));
 
 const port = 3000;
 console.log(`Server running at http://localhost:${port}`);
