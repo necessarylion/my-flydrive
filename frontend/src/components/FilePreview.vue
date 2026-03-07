@@ -43,7 +43,7 @@ const mimeType = computed(() => {
 })
 
 const previewUrl = computed(() =>
-  `http://localhost:3000/api/files/${props.driveId}/preview?path=${encodeURIComponent(props.filePath)}`
+  `/api/files/${props.driveId}/preview?path=${encodeURIComponent(props.filePath)}`
 )
 
 onMounted(async () => {
