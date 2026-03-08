@@ -8,7 +8,6 @@ services:
       - ADMIN_EMAIL=admin@drive.com
       - ADMIN_PASSWORD=changeme
       - JWT_SECRET=change-this-to-a-random-secret-key
-      - APP_DOMAIN=https://my-flydrive.app.com
     volumes:
       - drive-data:/app/data
       - drive-uploads:/app/uploads
