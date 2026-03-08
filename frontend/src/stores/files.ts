@@ -27,24 +27,23 @@ export const useFilesStore = defineStore("files", () => {
     await fetchFiles(currentDriveId.value, currentPath.value);
   }
 
-  async function download(path: string) {
-    const { data } = await downloadFile(currentDriveId.value, path);
-    const url = URL.createObjectURL(data);
+  function triggerBlobDownload(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = path.split("/").pop() || "file";
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
   }
 
+  async function download(path: string) {
+    const { data } = await downloadFile(currentDriveId.value, path);
+    triggerBlobDownload(data, path.split("/").pop() || "file");
+  }
+
   async function downloadFolder(path: string) {
     const { data } = await downloadFolderApi(currentDriveId.value, path);
-    const url = URL.createObjectURL(data);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = (path.split("/").filter(Boolean).pop() || "download") + ".zip";
-    a.click();
-    URL.revokeObjectURL(url);
+    triggerBlobDownload(data, (path.split("/").filter(Boolean).pop() || "download") + ".zip");
   }
 
   async function rename(path: string, newName: string, isDirectory = false) {

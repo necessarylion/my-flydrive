@@ -15,7 +15,8 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    const url = err.config?.url || "";
+    if (err.response?.status === 401 && !url.includes("/auth/")) {
       localStorage.removeItem("token");
       window.location.href = "/login";
     }
@@ -40,6 +41,11 @@ export interface FileItem {
   size?: number;
   lastModified?: string;
 }
+
+// Auth
+export const loginApi = (email: string, password: string) =>
+  api.post<{ token: string }>("/auth/login", { email, password });
+export const getMe = () => api.get<{ email: string }>("/auth/me");
 
 // Drives
 export const listDrives = () => api.get<Drive[]>("/drives");
