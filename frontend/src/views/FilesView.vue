@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { onMounted, ref, computed, watch, nextTick } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useFilesStore } from '../stores/files'
-import { useDrivesStore } from '../stores/drives'
-import FilePreview from '../components/FilePreview.vue'
-import ConfirmDialog from '../components/ConfirmDialog.vue'
-import ContextMenu from '../components/ContextMenu.vue'
-import type { MenuItem } from '../components/ContextMenu.vue'
-import { middleTruncate } from '../utils/truncate'
-import { HugeiconsIcon } from '@hugeicons/vue'
+import { onMounted, ref, computed, watch, nextTick } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useFilesStore } from '../stores/files';
+import { useDrivesStore } from '../stores/drives';
+import FilePreview from '../components/FilePreview.vue';
+import ConfirmDialog from '../components/ConfirmDialog.vue';
+import ContextMenu from '../components/ContextMenu.vue';
+import type { MenuItem } from '../components/ContextMenu.vue';
+import { middleTruncate } from '../utils/truncate';
+import { HugeiconsIcon } from '@hugeicons/vue';
 import {
   Folder01Icon,
   File01Icon,
@@ -24,215 +24,253 @@ import {
   PencilEdit01Icon,
   GridViewIcon,
   ListViewIcon,
-} from '@hugeicons/core-free-icons'
+} from '@hugeicons/core-free-icons';
 
-const route = useRoute()
-const router = useRouter()
-const filesStore = useFilesStore()
-const drivesStore = useDrivesStore()
-const fileInput = ref<HTMLInputElement>()
-const showNewFolder = ref(false)
-const newFolderName = ref('')
-const previewFile = ref<{ path: string; name: string } | null>(null)
-const deleteTarget = ref<{ path: string; name: string; isDirectory: boolean } | null>(null)
-const contextMenu = ref<{ x: number; y: number; items: MenuItem[] } | null>(null)
-const downloadTarget = ref<{ path: string; name: string } | null>(null)
-const downloadFolderTarget = ref<{ path: string; name: string } | null>(null)
-const renameTarget = ref<{ path: string; name: string; isDirectory: boolean } | null>(null)
-const renameInput = ref('')
-const viewMode = ref<'list' | 'grid'>('list')
+const route = useRoute();
+const router = useRouter();
+const filesStore = useFilesStore();
+const drivesStore = useDrivesStore();
+const fileInput = ref<HTMLInputElement>();
+const showNewFolder = ref(false);
+const newFolderName = ref('');
+const previewFile = ref<{ path: string; name: string } | null>(null);
+const deleteTarget = ref<{ path: string; name: string; isDirectory: boolean } | null>(null);
+const contextMenu = ref<{ x: number; y: number; items: MenuItem[] } | null>(null);
+const downloadTarget = ref<{ path: string; name: string } | null>(null);
+const downloadFolderTarget = ref<{ path: string; name: string } | null>(null);
+const renameTarget = ref<{ path: string; name: string; isDirectory: boolean } | null>(null);
+const renameInput = ref('');
+const viewMode = ref<'list' | 'grid'>('list');
 
 function startRename(item: { path: string; name: string; isDirectory: boolean }) {
-  renameTarget.value = item
-  renameInput.value = item.name
+  renameTarget.value = item;
+  renameInput.value = item.name;
   nextTick(() => {
-    const input = document.querySelector<HTMLInputElement>('.rename-input')
+    const input = document.querySelector<HTMLInputElement>('.rename-input');
     if (input) {
-      input.focus()
-      const dotIndex = item.name.lastIndexOf('.')
-      input.setSelectionRange(0, dotIndex > 0 && !item.isDirectory ? dotIndex : item.name.length)
+      input.focus();
+      const dotIndex = item.name.lastIndexOf('.');
+      input.setSelectionRange(0, dotIndex > 0 && !item.isDirectory ? dotIndex : item.name.length);
     }
-  })
+  });
 }
 
 async function handleRename() {
-  if (!renameTarget.value || !renameInput.value.trim()) return
-  const newName = renameInput.value.trim()
+  if (!renameTarget.value || !renameInput.value.trim()) return;
+  const newName = renameInput.value.trim();
   if (newName !== renameTarget.value.name) {
-    await filesStore.rename(renameTarget.value.path, newName, renameTarget.value.isDirectory)
+    await filesStore.rename(renameTarget.value.path, newName, renameTarget.value.isDirectory);
   }
-  renameTarget.value = null
+  renameTarget.value = null;
 }
 
 function handleContextMenu(e: MouseEvent, item: any) {
-  e.preventDefault()
-  const items: MenuItem[] = []
+  e.preventDefault();
+  const items: MenuItem[] = [];
 
   items.push({
     label: 'Rename',
     icon: PencilEdit01Icon,
     action: () => startRename({ path: item.path, name: item.name, isDirectory: item.isDirectory }),
-  })
+  });
 
   if (item.isDirectory) {
     items.push({
       label: 'Download as ZIP',
       icon: FolderZipIcon,
-      action: () => { downloadFolderTarget.value = { path: item.path, name: item.name } },
-    })
+      action: () => {
+        downloadFolderTarget.value = { path: item.path, name: item.name };
+      },
+    });
   } else {
     items.push({
       label: 'Download',
       icon: Download01Icon,
-      action: () => { downloadTarget.value = { path: item.path, name: item.name } },
-    })
+      action: () => {
+        downloadTarget.value = { path: item.path, name: item.name };
+      },
+    });
   }
 
   items.push({
     label: 'Delete',
     icon: Delete01Icon,
     danger: true,
-    action: () => { deleteTarget.value = { path: item.path, name: item.name, isDirectory: item.isDirectory } },
-  })
+    action: () => {
+      deleteTarget.value = { path: item.path, name: item.name, isDirectory: item.isDirectory };
+    },
+  });
 
-  contextMenu.value = { x: e.clientX, y: e.clientY, items }
+  contextMenu.value = { x: e.clientX, y: e.clientY, items };
 }
 
-const driveId = computed(() => route.params.driveId as string)
+const driveId = computed(() => route.params.driveId as string);
 const driveName = computed(() => {
-  const d = drivesStore.drives.find((d) => d.id === driveId.value)
-  return d?.name || 'Drive'
-})
+  const d = drivesStore.drives.find((d) => d.id === driveId.value);
+  return d?.name || 'Drive';
+});
 
 const breadcrumbs = computed(() => {
-  const parts = filesStore.currentPath.split('/').filter(Boolean)
-  const crumbs = [{ name: driveName.value, path: '' }]
-  let accumulated = ''
+  const parts = filesStore.currentPath.split('/').filter(Boolean);
+  const crumbs = [{ name: driveName.value, path: '' }];
+  let accumulated = '';
   for (const part of parts) {
-    accumulated = accumulated ? `${accumulated}/${part}` : part
-    crumbs.push({ name: part, path: accumulated })
+    accumulated = accumulated ? `${accumulated}/${part}` : part;
+    crumbs.push({ name: part, path: accumulated });
   }
-  return crumbs
-})
+  return crumbs;
+});
 
 onMounted(async () => {
-  if (!drivesStore.drives.length) await drivesStore.fetchDrives()
-  const encoded = (route.query.path as string) || ''
-  const initialPath = encoded ? atob(encoded) : ''
-  filesStore.fetchFiles(driveId.value, initialPath)
-})
+  if (!drivesStore.drives.length) await drivesStore.fetchDrives();
+  const encoded = (route.query.path as string) || '';
+  const initialPath = encoded ? atob(encoded) : '';
+  filesStore.fetchFiles(driveId.value, initialPath);
+});
 
 watch(driveId, (newId) => {
-  router.replace({ query: {} })
-  filesStore.fetchFiles(newId)
-})
+  router.replace({ query: {} });
+  filesStore.fetchFiles(newId);
+});
 
-watch(() => filesStore.currentPath, (path) => {
-  const query = path ? { path: btoa(path) } : {}
-  router.replace({ query })
-})
+watch(
+  () => filesStore.currentPath,
+  (path) => {
+    const query = path ? { path: btoa(path) } : {};
+    router.replace({ query });
+  },
+);
 
 async function handleUpload(e: Event) {
-  const target = e.target as HTMLInputElement
-  const files = target.files
-  if (!files?.length) return
-  await filesStore.uploadMultiple(Array.from(files))
-  target.value = ''
+  const target = e.target as HTMLInputElement;
+  const files = target.files;
+  if (!files?.length) return;
+  await filesStore.uploadMultiple(Array.from(files));
+  target.value = '';
 }
 
-const isDragging = ref(false)
-let dragCounter = 0
+const isDragging = ref(false);
+let dragCounter = 0;
 
 function handleDragEnter(e: DragEvent) {
-  e.preventDefault()
-  dragCounter++
+  e.preventDefault();
+  dragCounter++;
   if (e.dataTransfer?.types.includes('Files')) {
-    isDragging.value = true
+    isDragging.value = true;
   }
 }
 
 function handleDragLeave(e: DragEvent) {
-  e.preventDefault()
-  dragCounter--
+  e.preventDefault();
+  dragCounter--;
   if (dragCounter === 0) {
-    isDragging.value = false
+    isDragging.value = false;
   }
 }
 
 function handleDragOver(e: DragEvent) {
-  e.preventDefault()
+  e.preventDefault();
 }
 
 async function handleDrop(e: DragEvent) {
-  e.preventDefault()
-  dragCounter = 0
-  isDragging.value = false
-  const files = e.dataTransfer?.files
-  if (!files?.length) return
-  await filesStore.uploadMultiple(Array.from(files))
+  e.preventDefault();
+  dragCounter = 0;
+  isDragging.value = false;
+  const files = e.dataTransfer?.files;
+  if (!files?.length) return;
+  await filesStore.uploadMultiple(Array.from(files));
 }
 
 async function handleCreateFolder() {
-  if (!newFolderName.value.trim()) return
-  await filesStore.addFolder(newFolderName.value.trim())
-  newFolderName.value = ''
-  showNewFolder.value = false
+  if (!newFolderName.value.trim()) return;
+  await filesStore.addFolder(newFolderName.value.trim());
+  newFolderName.value = '';
+  showNewFolder.value = false;
 }
 
 function handleClick(item: any) {
   if (item.isDirectory) {
-    filesStore.navigateTo(item.path)
+    filesStore.navigateTo(item.path);
   } else if (isPreviewable(item.name)) {
-    previewFile.value = { path: item.path, name: item.name }
+    previewFile.value = { path: item.path, name: item.name };
   }
 }
 
-const MAX_PREVIEW_SIZE = 200 * 1024 * 1024 // 200MB
+const MAX_PREVIEW_SIZE = 200 * 1024 * 1024; // 200MB
 
 function isPreviewable(name: string, size?: number): boolean {
-  if (size != null && size > MAX_PREVIEW_SIZE) return false
-  const ext = name.split('.').pop()?.toLowerCase() || ''
+  if (size != null && size > MAX_PREVIEW_SIZE) return false;
+  const ext = name.split('.').pop()?.toLowerCase() || '';
   return [
-    'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico',
+    'jpg',
+    'jpeg',
+    'png',
+    'gif',
+    'webp',
+    'svg',
+    'bmp',
+    'ico',
     'pdf',
-    'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
-    'mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a',
-    'mp4', 'webm', 'ogv', 'mov',
-    'txt', 'json', 'xml', 'csv', 'md', 'log',
-  ].includes(ext)
+    'doc',
+    'docx',
+    'xls',
+    'xlsx',
+    'ppt',
+    'pptx',
+    'mp3',
+    'wav',
+    'ogg',
+    'aac',
+    'flac',
+    'm4a',
+    'mp4',
+    'webm',
+    'ogv',
+    'mov',
+    'txt',
+    'json',
+    'xml',
+    'csv',
+    'md',
+    'log',
+  ].includes(ext);
 }
 
 function getFileIcon(name: string) {
-  const ext = name.split('.').pop()?.toLowerCase() || ''
-  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'].includes(ext)) return Image01Icon
-  if (['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a'].includes(ext)) return FileAudioIcon
-  if (['mp4', 'webm', 'ogv', 'mov', 'avi', 'mkv'].includes(ext)) return FileVideoIcon
-  if (ext === 'pdf') return Pdf01Icon
-  return File01Icon
+  const ext = name.split('.').pop()?.toLowerCase() || '';
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'].includes(ext)) return Image01Icon;
+  if (['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a'].includes(ext)) return FileAudioIcon;
+  if (['mp4', 'webm', 'ogv', 'mov', 'avi', 'mkv'].includes(ext)) return FileVideoIcon;
+  if (ext === 'pdf') return Pdf01Icon;
+  return File01Icon;
 }
 
 function getFileIconColor(name: string) {
-  const ext = name.split('.').pop()?.toLowerCase() || ''
-  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'].includes(ext)) return 'text-red-500'
-  if (['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a'].includes(ext)) return 'text-purple-500'
-  if (['mp4', 'webm', 'ogv', 'mov', 'avi', 'mkv'].includes(ext)) return 'text-orange-500'
-  if (ext === 'pdf') return 'text-red-600'
-  return 'text-blue-500'
+  const ext = name.split('.').pop()?.toLowerCase() || '';
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'].includes(ext))
+    return 'text-red-500';
+  if (['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a'].includes(ext)) return 'text-purple-500';
+  if (['mp4', 'webm', 'ogv', 'mov', 'avi', 'mkv'].includes(ext)) return 'text-orange-500';
+  if (ext === 'pdf') return 'text-red-600';
+  return 'text-blue-500';
 }
 
 function formatDate(iso?: string) {
-  if (!iso) return '\u2014'
-  const d = new Date(iso)
-  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
-    + ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+  if (!iso) return '\u2014';
+  const d = new Date(iso);
+  return (
+    d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) +
+    ' ' +
+    d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+  );
 }
 
 function formatSize(bytes?: number) {
-  if (bytes == null) return '\u2014'
-  if (bytes < 1024) return bytes + ' B'
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
-  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
-  return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB'
+  if (bytes == null) return '\u2014';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
 }
 </script>
 
@@ -245,7 +283,9 @@ function formatSize(bytes?: number) {
     @drop="handleDrop"
   >
     <!-- Breadcrumbs -->
-    <div class="flex items-center justify-between px-3 md:px-6 h-12 border-b border-divider-light gap-2">
+    <div
+      class="flex items-center justify-between px-3 md:px-6 h-12 border-b border-divider-light gap-2"
+    >
       <div class="flex items-center text-sm min-w-0 overflow-x-auto">
         <template v-if="filesStore.isSearching">
           <span class="text-subtle">Search results for "</span>
@@ -265,27 +305,34 @@ function formatSize(bytes?: number) {
         </template>
       </div>
       <div class="flex items-center gap-0.5 bg-panel-alt rounded-lg p-0.5 shrink-0">
-          <button
-            @click="viewMode = 'list'"
-            class="p-1.5 rounded-md transition-colors"
-            :class="viewMode === 'list' ? 'bg-panel shadow-sm text-heading' : 'text-muted hover:text-subtle'"
-            title="List view"
-          >
-            <HugeiconsIcon :icon="ListViewIcon" :size="16" />
-          </button>
-          <button
-            @click="viewMode = 'grid'"
-            class="p-1.5 rounded-md transition-colors"
-            :class="viewMode === 'grid' ? 'bg-panel shadow-sm text-heading' : 'text-muted hover:text-subtle'"
-            title="Grid view"
-          >
-            <HugeiconsIcon :icon="GridViewIcon" :size="16" />
-          </button>
+        <button
+          @click="viewMode = 'list'"
+          class="p-1.5 rounded-md transition-colors"
+          :class="
+            viewMode === 'list' ? 'bg-panel shadow-sm text-heading' : 'text-muted hover:text-subtle'
+          "
+          title="List view"
+        >
+          <HugeiconsIcon :icon="ListViewIcon" :size="16" />
+        </button>
+        <button
+          @click="viewMode = 'grid'"
+          class="p-1.5 rounded-md transition-colors"
+          :class="
+            viewMode === 'grid' ? 'bg-panel shadow-sm text-heading' : 'text-muted hover:text-subtle'
+          "
+          title="Grid view"
+        >
+          <HugeiconsIcon :icon="GridViewIcon" :size="16" />
+        </button>
       </div>
     </div>
 
     <!-- New folder inline input -->
-    <div v-if="showNewFolder" class="flex flex-wrap items-center gap-2 px-3 md:px-6 py-2 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-100 dark:border-blue-800">
+    <div
+      v-if="showNewFolder"
+      class="flex flex-wrap items-center gap-2 px-3 md:px-6 py-2 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-100 dark:border-blue-800"
+    >
       <HugeiconsIcon :icon="Folder01Icon" :size="20" class="text-blue-500 dark:text-blue-400" />
       <input
         v-model="newFolderName"
@@ -295,8 +342,18 @@ function formatSize(bytes?: number) {
         @keyup.escape="showNewFolder = false"
         autofocus
       />
-      <button @click="handleCreateFolder" class="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700">Create</button>
-      <button @click="showNewFolder = false" class="px-3 py-1.5 text-xs text-subtle hover:text-body">Cancel</button>
+      <button
+        @click="handleCreateFolder"
+        class="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700"
+      >
+        Create
+      </button>
+      <button
+        @click="showNewFolder = false"
+        class="px-3 py-1.5 text-xs text-subtle hover:text-body"
+      >
+        Cancel
+      </button>
     </div>
 
     <!-- Loading -->
@@ -364,13 +421,24 @@ function formatSize(bytes?: number) {
                   @keyup.escape="renameTarget = null"
                   @blur="handleRename"
                 />
-                <span v-else class="text-sm text-heading break-all line-clamp-2" :title="item.name">{{ item.name }}</span>
+                <span
+                  v-else
+                  class="text-sm text-heading break-all line-clamp-2"
+                  :title="item.name"
+                  >{{ item.name }}</span
+                >
               </div>
             </td>
-            <td class="px-4 py-2 text-xs text-subtle hidden md:table-cell">{{ formatDate(item.lastModified) }}</td>
-            <td class="px-4 py-2 text-xs text-subtle hidden sm:table-cell">{{ item.isDirectory ? '\u2014' : formatSize(item.size) }}</td>
+            <td class="px-4 py-2 text-xs text-subtle hidden md:table-cell">
+              {{ formatDate(item.lastModified) }}
+            </td>
+            <td class="px-4 py-2 text-xs text-subtle hidden sm:table-cell">
+              {{ item.isDirectory ? '\u2014' : formatSize(item.size) }}
+            </td>
             <td class="pr-2 md:pr-6 py-2" @click.stop>
-              <div class="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+              <div
+                class="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+              >
                 <button
                   v-if="!item.isDirectory"
                   @click="downloadTarget = { path: item.path, name: item.name }"
@@ -380,11 +448,21 @@ function formatSize(bytes?: number) {
                   <HugeiconsIcon :icon="Download01Icon" :size="16" class="text-subtle" />
                 </button>
                 <button
-                  @click="deleteTarget = { path: item.path, name: item.name, isDirectory: item.isDirectory }"
+                  @click="
+                    deleteTarget = {
+                      path: item.path,
+                      name: item.name,
+                      isDirectory: item.isDirectory,
+                    }
+                  "
                   class="p-1.5 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                   title="Delete"
                 >
-                  <HugeiconsIcon :icon="Delete01Icon" :size="16" class="text-subtle hover:text-red-600 dark:hover:text-red-400" />
+                  <HugeiconsIcon
+                    :icon="Delete01Icon"
+                    :size="16"
+                    class="text-subtle hover:text-red-600 dark:hover:text-red-400"
+                  />
                 </button>
               </div>
             </td>
@@ -412,20 +490,27 @@ function formatSize(bytes?: number) {
         ..
       </div>
 
-      <div class="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2 md:gap-3">
+      <div
+        class="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2 md:gap-3"
+      >
         <div
           v-for="item in filesStore.files"
           :key="item.path"
           class="group flex flex-col items-center p-4 rounded-xl transition-colors relative"
           :class="[
-            item.isDirectory ? 'bg-panel-alt hover:bg-panel-alt' : 'bg-blue-50/50 dark:bg-blue-900/20 hover:bg-blue-50 dark:hover:bg-blue-900/30',
-            (item.isDirectory || isPreviewable(item.name, item.size)) ? 'cursor-pointer' : '',
+            item.isDirectory
+              ? 'bg-panel-alt hover:bg-panel-alt'
+              : 'bg-blue-50/50 dark:bg-blue-900/20 hover:bg-blue-50 dark:hover:bg-blue-900/30',
+            item.isDirectory || isPreviewable(item.name, item.size) ? 'cursor-pointer' : '',
           ]"
           @click="handleClick(item)"
           @contextmenu="handleContextMenu($event, item)"
         >
           <!-- Hover actions -->
-          <div class="absolute top-1.5 right-1.5 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" @click.stop>
+          <div
+            class="absolute top-1.5 right-1.5 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+            @click.stop
+          >
             <button
               v-if="!item.isDirectory"
               @click="downloadTarget = { path: item.path, name: item.name }"
@@ -435,11 +520,17 @@ function formatSize(bytes?: number) {
               <HugeiconsIcon :icon="Download01Icon" :size="14" class="text-subtle" />
             </button>
             <button
-              @click="deleteTarget = { path: item.path, name: item.name, isDirectory: item.isDirectory }"
+              @click="
+                deleteTarget = { path: item.path, name: item.name, isDirectory: item.isDirectory }
+              "
               class="p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
               title="Delete"
             >
-              <HugeiconsIcon :icon="Delete01Icon" :size="14" class="text-subtle hover:text-red-600 dark:hover:text-red-400" />
+              <HugeiconsIcon
+                :icon="Delete01Icon"
+                :size="14"
+                class="text-subtle hover:text-red-600 dark:hover:text-red-400"
+              />
             </button>
           </div>
 
@@ -467,12 +558,20 @@ function formatSize(bytes?: number) {
             @keyup.escape="renameTarget = null"
             @blur="handleRename"
           />
-          <span v-else class="text-xs text-body text-center w-full break-all line-clamp-2" :title="item.name">{{ item.name }}</span>
+          <span
+            v-else
+            class="text-xs text-body text-center w-full break-all line-clamp-2"
+            :title="item.name"
+            >{{ item.name }}</span
+          >
         </div>
       </div>
 
       <!-- Empty state -->
-      <div v-if="filesStore.files.length === 0 && !filesStore.currentPath" class="flex flex-col items-center justify-center py-20">
+      <div
+        v-if="filesStore.files.length === 0 && !filesStore.currentPath"
+        class="flex flex-col items-center justify-center py-20"
+      >
         <HugeiconsIcon :icon="File01Icon" :size="56" class="text-faint mb-4" />
         <p class="text-muted text-sm">Drop files here or use the "New" button to upload</p>
       </div>
@@ -486,7 +585,11 @@ function formatSize(bytes?: number) {
       class="absolute inset-2 bg-blue-50/80 dark:bg-blue-900/60 border-2 border-dashed border-blue-400 dark:border-blue-500 rounded-xl z-50 flex items-center justify-center pointer-events-none"
     >
       <div class="text-center">
-        <HugeiconsIcon :icon="File01Icon" :size="48" class="text-blue-400 dark:text-blue-300 mx-auto mb-2" />
+        <HugeiconsIcon
+          :icon="File01Icon"
+          :size="48"
+          class="text-blue-400 dark:text-blue-300 mx-auto mb-2"
+        />
         <p class="text-blue-600 dark:text-blue-400 font-medium">Drop files here to upload</p>
       </div>
     </div>
@@ -504,13 +607,23 @@ function formatSize(bytes?: number) {
         v-if="filesStore.uploads.length"
         class="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 z-50 md:w-80 bg-panel rounded-xl shadow-lg border border-divider overflow-hidden"
       >
-        <div class="px-4 py-2.5 bg-panel-alt border-b border-divider-light text-sm font-medium text-body">
-          Uploading {{ filesStore.uploads.length }} file{{ filesStore.uploads.length > 1 ? 's' : '' }}
+        <div
+          class="px-4 py-2.5 bg-panel-alt border-b border-divider-light text-sm font-medium text-body"
+        >
+          Uploading {{ filesStore.uploads.length }} file{{
+            filesStore.uploads.length > 1 ? 's' : ''
+          }}
         </div>
         <div class="max-h-48 overflow-y-auto">
-          <div v-for="(item, i) in filesStore.uploads" :key="i" class="px-4 py-2 border-b border-divider-light last:border-0">
+          <div
+            v-for="(item, i) in filesStore.uploads"
+            :key="i"
+            class="px-4 py-2 border-b border-divider-light last:border-0"
+          >
             <div class="flex items-center justify-between mb-1">
-              <span class="text-xs text-body truncate flex-1 mr-2" :title="item.name">{{ middleTruncate(item.name, 30) }}</span>
+              <span class="text-xs text-body truncate flex-1 mr-2" :title="item.name">{{
+                middleTruncate(item.name, 30)
+              }}</span>
               <span
                 class="text-xs shrink-0"
                 :class="{
@@ -520,7 +633,15 @@ function formatSize(bytes?: number) {
                   'text-muted': item.status === 'uploading',
                 }"
               >
-                {{ item.status === 'error' ? 'Failed' : item.status === 'done' ? 'Done' : item.status === 'processing' ? 'Saving to cloud...' : item.progress + '%' }}
+                {{
+                  item.status === 'error'
+                    ? 'Failed'
+                    : item.status === 'done'
+                      ? 'Done'
+                      : item.status === 'processing'
+                        ? 'Saving to cloud...'
+                        : item.progress + '%'
+                }}
               </span>
             </div>
             <div class="h-1 bg-panel-alt rounded-full overflow-hidden">
@@ -565,7 +686,10 @@ function formatSize(bytes?: number) {
       :message="`Download &quot;${middleTruncate(downloadTarget.name, 35)}&quot;?`"
       confirmLabel="Download"
       confirmColor="bg-blue-600 hover:bg-blue-700"
-      @confirm="filesStore.download(downloadTarget!.path); downloadTarget = null"
+      @confirm="
+        filesStore.download(downloadTarget!.path);
+        downloadTarget = null;
+      "
       @cancel="downloadTarget = null"
     />
 
@@ -576,7 +700,10 @@ function formatSize(bytes?: number) {
       :message="`Download &quot;${middleTruncate(downloadFolderTarget.name, 35)}&quot; as a ZIP file?`"
       confirmLabel="Download"
       confirmColor="bg-blue-600 hover:bg-blue-700"
-      @confirm="filesStore.downloadFolder(downloadFolderTarget!.path); downloadFolderTarget = null"
+      @confirm="
+        filesStore.downloadFolder(downloadFolderTarget!.path);
+        downloadFolderTarget = null;
+      "
       @cancel="downloadFolderTarget = null"
     />
 
@@ -585,7 +712,10 @@ function formatSize(bytes?: number) {
       v-if="deleteTarget"
       :title="`Delete ${deleteTarget.isDirectory ? 'folder' : 'file'}`"
       :message="`Are you sure you want to delete &quot;${middleTruncate(deleteTarget.name, 35)}&quot;? This action cannot be undone.`"
-      @confirm="filesStore.remove(deleteTarget!.path, deleteTarget!.isDirectory); deleteTarget = null"
+      @confirm="
+        filesStore.remove(deleteTarget!.path, deleteTarget!.isDirectory);
+        deleteTarget = null;
+      "
       @cancel="deleteTarget = null"
     />
   </div>

@@ -1,8 +1,8 @@
-import { defineStore } from "pinia";
-import { ref } from "vue";
-import { listDrives, createDrive, updateDrive, deleteDrive, type Drive } from "../api/client";
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
+import { listDrives, createDrive, updateDrive, deleteDrive, type Drive } from '../api/client';
 
-export const useDrivesStore = defineStore("drives", () => {
+export const useDrivesStore = defineStore('drives', () => {
   const drives = ref<Drive[]>([]);
   const loading = ref(false);
 

@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
-import { useDrivesStore } from '../stores/drives'
-import type { Drive } from '../api/client'
+import { ref, watch, computed } from 'vue';
+import { useDrivesStore } from '../stores/drives';
+import type { Drive } from '../api/client';
 
-const props = defineProps<{ drive: Drive | null }>()
-const emit = defineEmits<{ saved: []; cancel: [] }>()
-const store = useDrivesStore()
+const props = defineProps<{ drive: Drive | null }>();
+const emit = defineEmits<{ saved: []; cancel: [] }>();
+const store = useDrivesStore();
 
-const isEdit = computed(() => !!props.drive)
+const isEdit = computed(() => !!props.drive);
 
 const form = ref({
   name: '',
@@ -24,41 +24,41 @@ const form = ref({
   keyFilename: '',
   connectionString: '',
   container: '',
-})
+});
 
 watch(
   () => props.drive,
   (d) => {
     if (d) {
-      form.value.name = d.name
-      form.value.type = d.type
-      form.value.isDefault = d.isDefault
-      const cfg = d.config || {}
+      form.value.name = d.name;
+      form.value.type = d.type;
+      form.value.isDefault = d.isDefault;
+      const cfg = d.config || {};
       if (d.type === 'local') {
-        form.value.root = cfg.root || './uploads'
+        form.value.root = cfg.root || './uploads';
       } else if (d.type === 's3') {
-        form.value.bucket = cfg.bucket || ''
-        form.value.region = cfg.region || 'us-east-1'
-        form.value.accessKeyId = cfg.accessKeyId || ''
-        form.value.secretAccessKey = cfg.secretAccessKey || ''
-        form.value.endpoint = cfg.endpoint || ''
+        form.value.bucket = cfg.bucket || '';
+        form.value.region = cfg.region || 'us-east-1';
+        form.value.accessKeyId = cfg.accessKeyId || '';
+        form.value.secretAccessKey = cfg.secretAccessKey || '';
+        form.value.endpoint = cfg.endpoint || '';
       } else if (d.type === 'gcs') {
-        form.value.gcsBucket = cfg.bucket || ''
-        form.value.projectId = cfg.projectId || ''
-        form.value.keyFilename = cfg.keyFilename || ''
+        form.value.gcsBucket = cfg.bucket || '';
+        form.value.projectId = cfg.projectId || '';
+        form.value.keyFilename = cfg.keyFilename || '';
       } else if (d.type === 'azure') {
-        form.value.connectionString = cfg.connectionString || ''
-        form.value.container = cfg.container || ''
+        form.value.connectionString = cfg.connectionString || '';
+        form.value.container = cfg.container || '';
       }
     }
   },
-  { immediate: true }
-)
+  { immediate: true },
+);
 
 function buildConfig() {
   switch (form.value.type) {
     case 'local':
-      return { root: form.value.root }
+      return { root: form.value.root };
     case 's3':
       return {
         bucket: form.value.bucket,
@@ -66,52 +66,55 @@ function buildConfig() {
         accessKeyId: form.value.accessKeyId,
         secretAccessKey: form.value.secretAccessKey,
         ...(form.value.endpoint ? { endpoint: form.value.endpoint } : {}),
-      }
+      };
     case 'gcs':
       return {
         bucket: form.value.gcsBucket,
         projectId: form.value.projectId,
         ...(form.value.keyFilename ? { keyFilename: form.value.keyFilename } : {}),
-      }
+      };
     case 'azure':
       return {
         connectionString: form.value.connectionString,
         container: form.value.container,
-      }
+      };
     default:
-      return {}
+      return {};
   }
 }
 
-const saving = ref(false)
-const error = ref('')
+const saving = ref(false);
+const error = ref('');
 
 async function handleSubmit() {
-  error.value = ''
-  saving.value = true
+  error.value = '';
+  saving.value = true;
   try {
     const payload = {
       name: form.value.name,
       type: form.value.type,
       isDefault: form.value.isDefault,
       config: buildConfig(),
-    }
+    };
     if (isEdit.value && props.drive) {
-      await store.editDrive(props.drive.id, payload)
+      await store.editDrive(props.drive.id, payload);
     } else {
-      await store.addDrive(payload)
+      await store.addDrive(payload);
     }
-    emit('saved')
+    emit('saved');
   } catch (e: any) {
-    error.value = e.response?.data?.error || e.message
+    error.value = e.response?.data?.error || e.message;
   } finally {
-    saving.value = false
+    saving.value = false;
   }
 }
 </script>
 
 <template>
-  <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50" @click.self="emit('cancel')">
+  <div
+    class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+    @click.self="emit('cancel')"
+  >
     <div class="bg-panel rounded-2xl shadow-2xl w-[480px] max-h-[90vh] overflow-y-auto">
       <div class="px-6 pt-6 pb-4 border-b border-divider-light">
         <h2 class="text-lg font-medium text-heading">{{ isEdit ? 'Edit Drive' : 'Add Drive' }}</h2>
@@ -147,12 +150,18 @@ async function handleSubmit() {
 
         <!-- Default -->
         <label class="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" v-model="form.isDefault" class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+          <input
+            type="checkbox"
+            v-model="form.isDefault"
+            class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
           <span class="text-sm text-body">Set as default drive</span>
         </label>
 
         <div class="border-t border-divider-light pt-4">
-          <p class="text-xs font-medium text-muted uppercase tracking-wider mb-3">Provider Settings</p>
+          <p class="text-xs font-medium text-muted uppercase tracking-wider mb-3">
+            Provider Settings
+          </p>
 
           <!-- Local -->
           <template v-if="form.type === 'local'">
@@ -172,23 +181,43 @@ async function handleSubmit() {
             <div class="space-y-3">
               <div>
                 <label class="block text-sm font-medium text-body mb-1">Bucket</label>
-                <input v-model="form.bucket" class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading" />
+                <input
+                  v-model="form.bucket"
+                  class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading"
+                />
               </div>
               <div>
                 <label class="block text-sm font-medium text-body mb-1">Region</label>
-                <input v-model="form.region" class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading" />
+                <input
+                  v-model="form.region"
+                  class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading"
+                />
               </div>
               <div>
                 <label class="block text-sm font-medium text-body mb-1">Access Key ID</label>
-                <input v-model="form.accessKeyId" class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading" />
+                <input
+                  v-model="form.accessKeyId"
+                  class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading"
+                />
               </div>
               <div>
                 <label class="block text-sm font-medium text-body mb-1">Secret Access Key</label>
-                <input v-model="form.secretAccessKey" type="password" class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading" />
+                <input
+                  v-model="form.secretAccessKey"
+                  type="password"
+                  class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading"
+                />
               </div>
               <div>
-                <label class="block text-sm font-medium text-body mb-1">Endpoint <span class="text-muted font-normal">(optional, for MinIO/R2)</span></label>
-                <input v-model="form.endpoint" placeholder="https://..." class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading" />
+                <label class="block text-sm font-medium text-body mb-1"
+                  >Endpoint
+                  <span class="text-muted font-normal">(optional, for MinIO/R2)</span></label
+                >
+                <input
+                  v-model="form.endpoint"
+                  placeholder="https://..."
+                  class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading"
+                />
               </div>
             </div>
           </template>
@@ -198,15 +227,27 @@ async function handleSubmit() {
             <div class="space-y-3">
               <div>
                 <label class="block text-sm font-medium text-body mb-1">Bucket</label>
-                <input v-model="form.gcsBucket" class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading" />
+                <input
+                  v-model="form.gcsBucket"
+                  class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading"
+                />
               </div>
               <div>
                 <label class="block text-sm font-medium text-body mb-1">Project ID</label>
-                <input v-model="form.projectId" class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading" />
+                <input
+                  v-model="form.projectId"
+                  class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading"
+                />
               </div>
               <div>
-                <label class="block text-sm font-medium text-body mb-1">Key Filename <span class="text-muted font-normal">(optional)</span></label>
-                <input v-model="form.keyFilename" placeholder="/path/to/keyfile.json" class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading" />
+                <label class="block text-sm font-medium text-body mb-1"
+                  >Key Filename <span class="text-muted font-normal">(optional)</span></label
+                >
+                <input
+                  v-model="form.keyFilename"
+                  placeholder="/path/to/keyfile.json"
+                  class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading"
+                />
               </div>
             </div>
           </template>
@@ -216,17 +257,28 @@ async function handleSubmit() {
             <div class="space-y-3">
               <div>
                 <label class="block text-sm font-medium text-body mb-1">Connection String</label>
-                <input v-model="form.connectionString" class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading" />
+                <input
+                  v-model="form.connectionString"
+                  class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading"
+                />
               </div>
               <div>
                 <label class="block text-sm font-medium text-body mb-1">Container</label>
-                <input v-model="form.container" class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading" />
+                <input
+                  v-model="form.container"
+                  class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading"
+                />
               </div>
             </div>
           </template>
         </div>
 
-        <div v-if="error" class="text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 rounded-lg p-3">{{ error }}</div>
+        <div
+          v-if="error"
+          class="text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 rounded-lg p-3"
+        >
+          {{ error }}
+        </div>
 
         <div class="flex justify-end gap-2 pt-2">
           <button

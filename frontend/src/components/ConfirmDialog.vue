@@ -1,15 +1,15 @@
 <script setup lang="ts">
 defineProps<{
-  title: string
-  message: string
-  confirmLabel?: string
-  confirmColor?: string
-}>()
+  title: string;
+  message: string;
+  confirmLabel?: string;
+  confirmColor?: string;
+}>();
 
 const emit = defineEmits<{
-  confirm: []
-  cancel: []
-}>()
+  confirm: [];
+  cancel: [];
+}>();
 </script>
 
 <template>

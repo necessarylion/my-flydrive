@@ -1,23 +1,33 @@
-import { defineStore } from "pinia";
-import { ref } from "vue";
-import { listFiles, uploadFile, downloadFile, downloadFolder as downloadFolderApi, renameFile, deleteFile, createFolder, searchFiles as searchFilesApi, type FileItem } from "../api/client";
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
+import {
+  listFiles,
+  uploadFile,
+  downloadFile,
+  downloadFolder as downloadFolderApi,
+  renameFile,
+  deleteFile,
+  createFolder,
+  searchFiles as searchFilesApi,
+  type FileItem,
+} from '../api/client';
 
-export const useFilesStore = defineStore("files", () => {
+export const useFilesStore = defineStore('files', () => {
   const files = ref<FileItem[]>([]);
-  const currentPath = ref("");
+  const currentPath = ref('');
   const loading = ref(false);
-  const currentDriveId = ref("");
-  const searchQuery = ref("");
+  const currentDriveId = ref('');
+  const searchQuery = ref('');
   const isSearching = ref(false);
 
   interface UploadItem {
     name: string;
     progress: number;
-    status: "uploading" | "processing" | "done" | "error";
+    status: 'uploading' | 'processing' | 'done' | 'error';
   }
   const uploads = ref<UploadItem[]>([]);
 
-  async function fetchFiles(driveId: string, path = "") {
+  async function fetchFiles(driveId: string, path = '') {
     loading.value = true;
     currentDriveId.value = driveId;
     currentPath.value = path;
@@ -36,7 +46,9 @@ export const useFilesStore = defineStore("files", () => {
 
   async function uploadMultiple(files: File[]) {
     const startIdx = uploads.value.length;
-    uploads.value.push(...files.map((f) => ({ name: f.name, progress: 0, status: "uploading" as const })));
+    uploads.value.push(
+      ...files.map((f) => ({ name: f.name, progress: 0, status: 'uploading' as const })),
+    );
 
     await Promise.all(
       files.map(async (f, i) => {
@@ -45,28 +57,36 @@ export const useFilesStore = defineStore("files", () => {
         if (!item) return;
         try {
           await uploadFile(
-            currentDriveId.value, f, currentPath.value,
-            (p) => { item.progress = p; },
-            () => { item.status = "processing"; },
+            currentDriveId.value,
+            f,
+            currentPath.value,
+            (p) => {
+              item.progress = p;
+            },
+            () => {
+              item.status = 'processing';
+            },
           );
-          item.status = "done";
+          item.status = 'done';
           item.progress = 100;
         } catch {
-          item.status = "error";
+          item.status = 'error';
         }
-      })
+      }),
     );
 
     await fetchFiles(currentDriveId.value, currentPath.value);
 
     setTimeout(() => {
-      uploads.value = uploads.value.filter((u) => u.status === "uploading" || u.status === "processing");
+      uploads.value = uploads.value.filter(
+        (u) => u.status === 'uploading' || u.status === 'processing',
+      );
     }, 2000);
   }
 
   function triggerBlobDownload(blob: Blob, filename: string) {
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     a.href = url;
     a.download = filename;
     a.click();
@@ -75,12 +95,12 @@ export const useFilesStore = defineStore("files", () => {
 
   async function download(path: string) {
     const { data } = await downloadFile(currentDriveId.value, path);
-    triggerBlobDownload(data, path.split("/").pop() || "file");
+    triggerBlobDownload(data, path.split('/').pop() || 'file');
   }
 
   async function downloadFolder(path: string) {
     const { data } = await downloadFolderApi(currentDriveId.value, path);
-    triggerBlobDownload(data, (path.split("/").filter(Boolean).pop() || "download") + ".zip");
+    triggerBlobDownload(data, (path.split('/').filter(Boolean).pop() || 'download') + '.zip');
   }
 
   async function rename(path: string, newName: string, isDirectory = false) {
@@ -116,22 +136,42 @@ export const useFilesStore = defineStore("files", () => {
   }
 
   function clearSearch() {
-    searchQuery.value = "";
+    searchQuery.value = '';
     isSearching.value = false;
     fetchFiles(currentDriveId.value, currentPath.value);
   }
 
   function navigateTo(path: string) {
-    searchQuery.value = "";
+    searchQuery.value = '';
     isSearching.value = false;
     fetchFiles(currentDriveId.value, path);
   }
 
   function navigateUp() {
-    const parts = currentPath.value.split("/").filter(Boolean);
+    const parts = currentPath.value.split('/').filter(Boolean);
     parts.pop();
-    fetchFiles(currentDriveId.value, parts.join("/"));
+    fetchFiles(currentDriveId.value, parts.join('/'));
   }
 
-  return { files, currentPath, loading, currentDriveId, searchQuery, isSearching, uploads, fetchFiles, upload, uploadMultiple, download, downloadFolder, rename, remove, addFolder, search, clearSearch, navigateTo, navigateUp };
+  return {
+    files,
+    currentPath,
+    loading,
+    currentDriveId,
+    searchQuery,
+    isSearching,
+    uploads,
+    fetchFiles,
+    upload,
+    uploadMultiple,
+    download,
+    downloadFolder,
+    rename,
+    remove,
+    addFolder,
+    search,
+    clearSearch,
+    navigateTo,
+    navigateUp,
+  };
 });

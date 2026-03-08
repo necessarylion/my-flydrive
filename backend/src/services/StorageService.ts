@@ -1,21 +1,34 @@
-import { Service } from "typedi";
-import { Disk as Drive } from "flydrive";
-import { FSDriver } from "flydrive/drivers/fs";
-import { S3Driver } from "flydrive/drivers/s3";
-import { GCSDriver } from "flydrive/drivers/gcs";
-import { AzureDriver } from "flydrive-azure";
+import { Service } from 'typedi';
+import { Disk as Drive } from 'flydrive';
+import { FSDriver } from 'flydrive/drivers/fs';
+import { S3Driver } from 'flydrive/drivers/s3';
+import { GCSDriver } from 'flydrive/drivers/gcs';
+import { AzureDriver } from 'flydrive-azure';
 
-import type { DriveConfig, LocalConfig, S3Config, GCSConfig, AzureConfig } from "../types/drive";
+import type { DriveConfig, LocalConfig, S3Config, GCSConfig, AzureConfig } from '../types/drive';
 
 @Service()
 export class StorageService {
+  /**
+   * Creates a flydrive `Disk` instance configured for the specified storage provider.
+   *
+   * Supported provider types:
+   * - `"local"` - Local filesystem via `FSDriver`
+   * - `"s3"` - AWS S3 or S3-compatible storage via `S3Driver`
+   * - `"gcs"` - Google Cloud Storage via `GCSDriver`
+   * - `"azure"` - Azure Blob Storage via `AzureDriver`
+   *
+   * @param driveConfig - The drive configuration containing provider type and credentials.
+   * @returns A configured `Disk` instance ready for file operations.
+   * @throws {Error} If the drive type is not supported.
+   */
   createDrive(driveConfig: DriveConfig): Drive {
     switch (driveConfig.type) {
-      case "local": {
+      case 'local': {
         const cfg = driveConfig.config as LocalConfig;
-        return new Drive(new FSDriver({ location: cfg.root, visibility: "public" }));
+        return new Drive(new FSDriver({ location: cfg.root, visibility: 'public' }));
       }
-      case "s3": {
+      case 's3': {
         const cfg = driveConfig.config as S3Config;
         return new Drive(
           new S3Driver({
@@ -23,23 +36,25 @@ export class StorageService {
             region: cfg.region,
             bucket: cfg.bucket,
             ...(cfg.endpoint ? { endpoint: cfg.endpoint } : {}),
-            visibility: "public",
-          })
+            visibility: 'public',
+          }),
         );
       }
-      case "gcs": {
+      case 'gcs': {
         const cfg = driveConfig.config as GCSConfig;
         return new Drive(
           new GCSDriver({
             bucket: cfg.bucket,
             ...(cfg.keyFilename ? { keyFilename: cfg.keyFilename } : {}),
-            visibility: "public",
-          })
+            visibility: 'public',
+          }),
         );
       }
-      case "azure": {
+      case 'azure': {
         const cfg = driveConfig.config as AzureConfig;
-        return new Drive(new AzureDriver({ connectionString: cfg.connectionString, container: cfg.container }));
+        return new Drive(
+          new AzureDriver({ connectionString: cfg.connectionString, container: cfg.container }),
+        );
       }
       default:
         throw new Error(`Unsupported drive type: ${driveConfig.type}`);

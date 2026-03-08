@@ -1,30 +1,30 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '../stores/auth'
-import appLogo from '../assets/local.svg'
-import { HugeiconsIcon } from '@hugeicons/vue'
-import { ViewIcon, ViewOffIcon } from '@hugeicons/core-free-icons'
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '../stores/auth';
+import appLogo from '../assets/local.svg';
+import { HugeiconsIcon } from '@hugeicons/vue';
+import { ViewIcon, ViewOffIcon } from '@hugeicons/core-free-icons';
 
-const router = useRouter()
-const authStore = useAuthStore()
+const router = useRouter();
+const authStore = useAuthStore();
 
-const email = ref('')
-const password = ref('')
-const error = ref('')
-const loading = ref(false)
-const showPassword = ref(false)
+const email = ref('');
+const password = ref('');
+const error = ref('');
+const loading = ref(false);
+const showPassword = ref(false);
 
 async function handleLogin() {
-  error.value = ''
-  loading.value = true
+  error.value = '';
+  loading.value = true;
   try {
-    await authStore.login(email.value, password.value)
-    router.push('/')
+    await authStore.login(email.value, password.value);
+    router.push('/');
   } catch (e: any) {
-    error.value = e.response?.data?.error || 'Login failed'
+    error.value = e.response?.data?.error || 'Login failed';
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 </script>
@@ -32,7 +32,9 @@ async function handleLogin() {
 <template>
   <div class="min-h-screen flex font-sans">
     <!-- Left panel - decorative -->
-    <div class="hidden lg:flex lg:w-1/2 bg-linear-to-br from-blue-600 via-blue-500 to-cyan-400 relative overflow-hidden">
+    <div
+      class="hidden lg:flex lg:w-1/2 bg-linear-to-br from-blue-600 via-blue-500 to-cyan-400 relative overflow-hidden"
+    >
       <div class="absolute inset-0">
         <div class="absolute top-1/4 -left-20 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
         <div class="absolute bottom-1/4 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
@@ -40,11 +42,10 @@ async function handleLogin() {
 
       <div class="relative z-10 flex flex-col justify-center px-16 text-white">
         <img :src="appLogo" class="w-16 h-16 mb-8 drop-shadow-lg" alt="My Flydrive" />
-        <h1 class="text-4xl font-bold mb-4 leading-tight">
-          Welcome to<br />My Flydrive
-        </h1>
+        <h1 class="text-4xl font-bold mb-4 leading-tight">Welcome to<br />My Flydrive</h1>
         <p class="text-lg text-white/80 max-w-md leading-relaxed">
-          Manage your files across multiple storage providers — local, S3, GCS, and Azure — all in one place.
+          Manage your files across multiple storage providers — local, S3, GCS, and Azure — all in
+          one place.
         </p>
 
         <div class="mt-12 flex gap-6">
@@ -85,9 +86,16 @@ async function handleLogin() {
             leave-from-class="opacity-100 translate-y-0"
             leave-to-class="opacity-0 -translate-y-1"
           >
-            <div v-if="error" class="mb-4 flex items-start gap-2 text-red-600 text-sm bg-red-50 dark:bg-red-900/20 rounded-2xl p-4">
+            <div
+              v-if="error"
+              class="mb-4 flex items-start gap-2 text-red-600 text-sm bg-red-50 dark:bg-red-900/20 rounded-2xl p-4"
+            >
               <svg class="w-5 h-5 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                <path
+                  fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                  clip-rule="evenodd"
+                />
               </svg>
               {{ error }}
             </div>
@@ -134,8 +142,19 @@ async function handleLogin() {
             >
               <span v-if="loading" class="flex items-center justify-center gap-2">
                 <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  />
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
                 </svg>
                 Signing in...
               </span>

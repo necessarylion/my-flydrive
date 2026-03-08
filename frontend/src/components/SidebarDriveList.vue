@@ -1,65 +1,64 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useFilesStore } from '../stores/files'
-import type { Drive } from '../api/client'
-import { HugeiconsIcon } from '@hugeicons/vue'
+import { ref, onMounted, onUnmounted } from 'vue';
+import { useFilesStore } from '../stores/files';
+import type { Drive } from '../api/client';
+import { HugeiconsIcon } from '@hugeicons/vue';
 import {
   PlusSignIcon,
   FolderAddIcon,
   CloudUploadIcon,
   HardDriveIcon,
   Settings01Icon,
-} from '@hugeicons/core-free-icons'
-import ProviderIcon from './ProviderIcon.vue'
+} from '@hugeicons/core-free-icons';
+import ProviderIcon from './ProviderIcon.vue';
 
 defineProps<{
-  drives: Drive[]
-  activeDriveId: string
-}>()
+  drives: Drive[];
+  activeDriveId: string;
+}>();
 
 const emit = defineEmits<{
-  select: [id: string]
-}>()
+  select: [id: string];
+}>();
 
-const filesStore = useFilesStore()
-const showMenu = ref(false)
-const menuRef = ref<HTMLElement>()
+const filesStore = useFilesStore();
+const showMenu = ref(false);
+const menuRef = ref<HTMLElement>();
 
 function handleNewClick() {
-  showMenu.value = !showMenu.value
+  showMenu.value = !showMenu.value;
 }
 
 function handleClickOutside(e: MouseEvent) {
   if (showMenu.value && menuRef.value && !menuRef.value.contains(e.target as Node)) {
-    showMenu.value = false
+    showMenu.value = false;
   }
 }
 
-onMounted(() => document.addEventListener('click', handleClickOutside))
-onUnmounted(() => document.removeEventListener('click', handleClickOutside))
+onMounted(() => document.addEventListener('click', handleClickOutside));
+onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 
 function handleNewFolder() {
-  showMenu.value = false
-  const name = prompt('Folder name:')
+  showMenu.value = false;
+  const name = prompt('Folder name:');
   if (name && filesStore.currentDriveId) {
-    filesStore.addFolder(name)
+    filesStore.addFolder(name);
   }
 }
 
 function handleUpload() {
-  showMenu.value = false
-  const input = document.createElement('input')
-  input.type = 'file'
-  input.multiple = true
+  showMenu.value = false;
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.multiple = true;
   input.onchange = async () => {
-    const files = input.files
+    const files = input.files;
     if (files?.length && filesStore.currentDriveId) {
-      await filesStore.uploadMultiple(Array.from(files))
+      await filesStore.uploadMultiple(Array.from(files));
     }
-  }
-  input.click()
+  };
+  input.click();
 }
-
 </script>
 
 <template>
@@ -118,16 +117,22 @@ function handleUpload() {
           :key="drive.id"
           @click="emit('select', drive.id)"
           class="group flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all text-left"
-          :class="activeDriveId === drive.id
-            ? 'bg-panel-active text-panel-active-text font-medium'
-            : 'text-body hover:bg-btn-hover'"
+          :class="
+            activeDriveId === drive.id
+              ? 'bg-panel-active text-panel-active-text font-medium'
+              : 'text-body hover:bg-btn-hover'
+          "
         >
           <ProviderIcon :type="drive.type" :size="20" />
           <span class="truncate flex-1">{{ drive.name }}</span>
           <span
             v-if="drive.isDefault"
             class="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full font-medium uppercase tracking-wider"
-            :class="activeDriveId === drive.id ? 'bg-badge-active-bg text-badge-active-text' : 'bg-badge-bg text-badge-text'"
+            :class="
+              activeDriveId === drive.id
+                ? 'bg-badge-active-bg text-badge-active-text'
+                : 'bg-badge-bg text-badge-text'
+            "
           >
             default
           </span>
