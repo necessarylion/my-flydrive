@@ -146,7 +146,9 @@ export class FileService {
         const relativePath = f.key.slice(oldPath.length);
         await disk.move(f.key, newPath + relativePath);
       }
-      try { await disk.deleteAll(oldPath); } catch {}
+      try { await disk.deleteAll(oldPath); } catch (err) {
+        console.warn("Failed to clean up old directory after rename:", oldPath);
+      }
     }
   }
 

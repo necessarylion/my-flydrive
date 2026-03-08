@@ -92,14 +92,17 @@ export class ChunkedUploadService {
         case "local": {
           const dir = join(CHUNKS_DIR, uploadId);
           const mergedPath = join(dir, "_merged");
-          for (let i = 0; i < totalChunks; i++) {
-            const chunkBytes = await Bun.file(join(dir, String(i))).arrayBuffer();
-            await appendFile(mergedPath, Buffer.from(chunkBytes));
+          try {
+            for (let i = 0; i < totalChunks; i++) {
+              const chunkBytes = await Bun.file(join(dir, String(i))).arrayBuffer();
+              await appendFile(mergedPath, Buffer.from(chunkBytes));
+            }
+            const disk = this.storageService.createDisk(driveConfig);
+            const stream = createReadStream(mergedPath);
+            await disk.putStream(state.filePath, stream);
+          } finally {
+            await rm(dir, { recursive: true, force: true }).catch(() => {});
           }
-          const disk = this.storageService.createDisk(driveConfig);
-          const stream = createReadStream(mergedPath);
-          await disk.putStream(state.filePath, stream);
-          await rm(dir, { recursive: true, force: true });
           return state.filePath;
         }
       }

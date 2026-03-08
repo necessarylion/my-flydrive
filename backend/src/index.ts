@@ -2,14 +2,20 @@ import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { bodyLimit } from "hono/body-limit";
 import { jwtMiddleware } from "./middleware/auth";
+import { securityHeaders } from "./middleware/security";
+import { loginRateLimiter } from "./middleware/rateLimiter";
 import { authController, driveController, fileController } from "./container";
 
 const app = new Hono();
+
+// Security headers on all responses
+app.use("*", securityHeaders);
 
 app.use("/api/files/*/upload", bodyLimit({ maxSize: 10 * 1024 * 1024 * 1024 })); // 10GB
 
 // Public routes
 app.get("/health", (c) => c.json({ status: "ok" }));
+app.use("/api/auth/login", loginRateLimiter);
 app.route("/api/auth", authController.publicRoutes);
 
 // All /api/* routes require JWT

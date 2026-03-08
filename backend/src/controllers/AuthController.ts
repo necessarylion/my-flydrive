@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { sign } from "hono/jwt";
+import { timingSafeEqual } from "node:crypto";
 
 export class AuthController {
   readonly publicRoutes = new Hono();
@@ -15,9 +16,20 @@ export class AuthController {
   }
 
   private async login(c: any) {
-    const { email, password } = await c.req.json();
+    let body: { email?: string; password?: string };
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "Invalid request body" }, 400);
+    }
 
-    if (email !== this.adminEmail || password !== this.adminPassword) {
+    const { email, password } = body;
+    if (!email || !password) {
+      return c.json({ error: "Email and password are required" }, 400);
+    }
+
+    if (!this.timingSafeCompare(email, this.adminEmail) ||
+        !this.timingSafeCompare(password, this.adminPassword)) {
       return c.json({ error: "Invalid credentials" }, 401);
     }
 
@@ -27,6 +39,19 @@ export class AuthController {
     );
 
     return c.json({ token });
+  }
+
+  private timingSafeCompare(a: string, b: string): boolean {
+    const encoder = new TextEncoder();
+    const bufA = encoder.encode(a);
+    const bufB = encoder.encode(b);
+    if (bufA.byteLength !== bufB.byteLength) {
+      // Still do a comparison to avoid timing leak on length difference
+      const dummy = encoder.encode(b);
+      timingSafeEqual(dummy, dummy);
+      return false;
+    }
+    return timingSafeEqual(bufA, bufB);
   }
 
   private async me(c: any) {

@@ -5,6 +5,7 @@ import { FileService, PreviewTooLargeError, EmptyFolderError } from "../services
 import type { ChunkedUploadService } from "../services/ChunkedUploadService";
 import type { DriveConfig } from "../types/drive";
 import type { DriveService } from "../services/DriveService";
+import { assertSafePath, PathTraversalError, sanitizeContentDisposition, safeErrorMessage } from "../utils/validation";
 
 type DiskEnv = { Variables: { disk: Disk; driveConfig: DriveConfig } };
 
@@ -46,17 +47,19 @@ export class FileController {
   private async list(c: Context<DiskEnv>) {
     const prefix = c.req.query("path") || "";
     try {
+      if (prefix) assertSafePath(prefix);
       const result = await this.fileService.listFiles(c.get("disk"), prefix);
       return c.json(result);
     } catch (err: any) {
-      console.error("List error:", err);
-      return c.json({ error: err.message }, 500);
+      if (err instanceof PathTraversalError) return c.json({ error: err.message }, 400);
+      return c.json({ error: safeErrorMessage(err) }, 500);
     }
   }
 
   private async upload(c: Context<DiskEnv>) {
     const targetPath = c.req.query("path") || "";
     try {
+      if (targetPath) assertSafePath(targetPath);
       const formData = await c.req.formData();
       const file = formData.get("file") as File | null;
       if (!file) return c.json({ error: "No file provided" }, 400);
@@ -64,13 +67,15 @@ export class FileController {
       const filePath = await this.fileService.upload(c.get("disk"), targetPath, file);
       return c.json({ message: "File uploaded", path: filePath }, 201);
     } catch (err: any) {
-      return c.json({ error: err.message }, 500);
+      if (err instanceof PathTraversalError) return c.json({ error: err.message }, 400);
+      return c.json({ error: safeErrorMessage(err) }, 500);
     }
   }
 
   private async uploadChunk(c: Context<DiskEnv>) {
     try {
       const targetPath = c.req.query("path") || "";
+      if (targetPath) assertSafePath(targetPath);
       const formData = await c.req.formData();
       const chunk = formData.get("chunk") as File | null;
       const uploadId = formData.get("uploadId") as string;
@@ -79,29 +84,45 @@ export class FileController {
       if (!chunk || !uploadId || chunkIndex == null || !fileName) {
         return c.json({ error: "chunk, uploadId, chunkIndex, and fileName are required" }, 400);
       }
+
+      const idx = parseInt(chunkIndex);
+      if (isNaN(idx) || idx < 0 || idx > 10000) {
+        return c.json({ error: "Invalid chunkIndex" }, 400);
+      }
+
       const buffer = Buffer.from(await chunk.arrayBuffer());
       await this.chunkedUploadService.stageChunk(
-        c.get("driveConfig"), uploadId, parseInt(chunkIndex), buffer, fileName, targetPath,
+        c.get("driveConfig"), uploadId, idx, buffer, fileName, targetPath,
       );
       return c.json({ message: "Chunk uploaded" });
     } catch (err: any) {
-      return c.json({ error: err.message }, 500);
+      if (err instanceof PathTraversalError) return c.json({ error: err.message }, 400);
+      return c.json({ error: safeErrorMessage(err) }, 500);
     }
   }
 
   private async uploadComplete(c: Context<DiskEnv>) {
+    let body: any;
     try {
-      const body = await c.req.json();
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "Invalid request body" }, 400);
+    }
+
+    try {
       const { uploadId, totalChunks } = body;
       if (!uploadId || !totalChunks) {
         return c.json({ error: "uploadId and totalChunks are required" }, 400);
+      }
+      if (typeof totalChunks !== "number" || totalChunks < 1 || totalChunks > 10000) {
+        return c.json({ error: "Invalid totalChunks" }, 400);
       }
       const filePath = await this.chunkedUploadService.complete(
         c.get("driveConfig"), uploadId, totalChunks,
       );
       return c.json({ message: "File uploaded", path: filePath }, 201);
     } catch (err: any) {
-      return c.json({ error: err.message }, 500);
+      return c.json({ error: safeErrorMessage(err) }, 500);
     }
   }
 
@@ -110,15 +131,17 @@ export class FileController {
     if (!filePath) return c.json({ error: "Path is required" }, 400);
 
     try {
+      assertSafePath(filePath);
       const { bytes, fileName } = await this.fileService.download(c.get("disk"), filePath);
       return new Response(bytes, {
         headers: {
           "Content-Type": "application/octet-stream",
-          "Content-Disposition": `attachment; filename="${fileName}"`,
+          "Content-Disposition": sanitizeContentDisposition(fileName),
         },
       });
     } catch (err: any) {
-      return c.json({ error: err.message }, 500);
+      if (err instanceof PathTraversalError) return c.json({ error: err.message }, 400);
+      return c.json({ error: safeErrorMessage(err) }, 500);
     }
   }
 
@@ -127,6 +150,7 @@ export class FileController {
     if (!filePath) return c.json({ error: "Path is required" }, 400);
 
     try {
+      assertSafePath(filePath);
       const { bytes, contentType } = await this.fileService.preview(c.get("disk"), filePath);
       return new Response(bytes, {
         headers: {
@@ -135,25 +159,27 @@ export class FileController {
         },
       });
     } catch (err: any) {
+      if (err instanceof PathTraversalError) return c.json({ error: err.message }, 400);
       if (err instanceof PreviewTooLargeError) return c.json({ error: err.message }, 413);
-      return c.json({ error: err.message }, 500);
+      return c.json({ error: safeErrorMessage(err) }, 500);
     }
   }
 
   private async downloadFolder(c: Context<DiskEnv>) {
     const folderPath = c.req.query("path") || "";
     try {
+      if (folderPath) assertSafePath(folderPath);
       const { stream, folderName } = await this.fileService.downloadFolder(c.get("disk"), folderPath);
       return new Response(stream as any, {
         headers: {
           "Content-Type": "application/zip",
-          "Content-Disposition": `attachment; filename="${folderName}.zip"`,
+          "Content-Disposition": sanitizeContentDisposition(`${folderName}.zip`),
         },
       });
     } catch (err: any) {
+      if (err instanceof PathTraversalError) return c.json({ error: err.message }, 400);
       if (err instanceof EmptyFolderError) return c.json({ error: err.message }, 400);
-      console.error("Download folder error:", err);
-      return c.json({ error: err.message }, 500);
+      return c.json({ error: safeErrorMessage(err) }, 500);
     }
   }
 
@@ -163,39 +189,59 @@ export class FileController {
     if (!filePath) return c.json({ error: "Path is required" }, 400);
 
     try {
+      assertSafePath(filePath);
       await this.fileService.deleteItem(c.get("disk"), filePath, isDirectory);
       return c.json({ message: isDirectory ? "Folder deleted" : "File deleted" });
     } catch (err: any) {
-      return c.json({ error: err.message }, 500);
+      if (err instanceof PathTraversalError) return c.json({ error: err.message }, 400);
+      return c.json({ error: safeErrorMessage(err) }, 500);
     }
   }
 
   private async createFolder(c: Context<DiskEnv>) {
-    const body = await c.req.json();
+    let body: any;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "Invalid request body" }, 400);
+    }
+
     const folderPath = body.path;
-    if (!folderPath) return c.json({ error: "Path is required" }, 400);
+    if (!folderPath || typeof folderPath !== "string") {
+      return c.json({ error: "Path is required" }, 400);
+    }
 
     try {
+      assertSafePath(folderPath);
       await this.fileService.createFolder(c.get("disk"), folderPath);
       return c.json({ message: "Folder created", path: folderPath }, 201);
     } catch (err: any) {
-      return c.json({ error: err.message }, 500);
+      if (err instanceof PathTraversalError) return c.json({ error: err.message }, 400);
+      return c.json({ error: safeErrorMessage(err) }, 500);
     }
   }
 
   private async rename(c: Context<DiskEnv>) {
-    const body = await c.req.json();
+    let body: any;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "Invalid request body" }, 400);
+    }
+
     const { path: oldPath, newName, isDirectory } = body;
 
     if (!oldPath || !newName) return c.json({ error: "path and newName are required" }, 400);
-    if (newName.includes("/")) return c.json({ error: "newName must not contain /" }, 400);
+    if (newName.includes("/") || newName.includes("\\")) return c.json({ error: "newName must not contain path separators" }, 400);
+    if (newName === ".." || newName === ".") return c.json({ error: "Invalid newName" }, 400);
 
     try {
+      assertSafePath(oldPath);
       const newPath = await this.fileService.rename(c.get("disk"), oldPath, newName, isDirectory);
       return c.json({ message: "Renamed successfully", oldPath, newPath });
     } catch (err: any) {
-      console.error("Rename error:", err);
-      return c.json({ error: err.message }, 500);
+      if (err instanceof PathTraversalError) return c.json({ error: err.message }, 400);
+      return c.json({ error: safeErrorMessage(err) }, 500);
     }
   }
 
@@ -207,8 +253,7 @@ export class FileController {
       const items = await this.fileService.search(c.get("disk"), query);
       return c.json({ query, items });
     } catch (err: any) {
-      console.error("Search error:", err);
-      return c.json({ error: err.message }, 500);
+      return c.json({ error: safeErrorMessage(err) }, 500);
     }
   }
 }

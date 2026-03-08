@@ -1,5 +1,12 @@
 import { Hono } from "hono";
 import type { DriveService } from "../services/DriveService";
+import type { DriveConfig } from "../types/drive";
+import { createDriveSchema, updateDriveSchema } from "../utils/validation";
+
+function stripCredentials(drive: DriveConfig): Omit<DriveConfig, "config"> {
+  const { config, ...rest } = drive;
+  return rest;
+}
 
 export class DriveController {
   readonly routes = new Hono();
@@ -19,21 +26,43 @@ export class DriveController {
   private getById(c: any) {
     const drive = this.driveService.getById(c.req.param("id"));
     if (!drive) return c.json({ error: "Drive not found" }, 404);
-    return c.json(drive);
+    return c.json(stripCredentials(drive));
   }
 
   private async create(c: any) {
-    const body = await c.req.json();
-    const drive = this.driveService.create(body);
-    return c.json(drive, 201);
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "Invalid request body" }, 400);
+    }
+
+    const result = createDriveSchema.safeParse(body);
+    if (!result.success) {
+      return c.json({ error: "Invalid drive configuration", details: result.error.issues.map((i: any) => i.message) }, 400);
+    }
+
+    const drive = this.driveService.create(result.data);
+    return c.json(stripCredentials(drive), 201);
   }
 
   private async update(c: any) {
     const id = c.req.param("id");
-    const body = await c.req.json();
-    const updated = this.driveService.update(id, body);
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "Invalid request body" }, 400);
+    }
+
+    const result = updateDriveSchema.safeParse(body);
+    if (!result.success) {
+      return c.json({ error: "Invalid drive configuration", details: result.error.issues.map((i: any) => i.message) }, 400);
+    }
+
+    const updated = this.driveService.update(id, result.data as Partial<DriveConfig>);
     if (!updated) return c.json({ error: "Drive not found" }, 404);
-    return c.json(updated);
+    return c.json(stripCredentials(updated));
   }
 
   private remove(c: any) {
