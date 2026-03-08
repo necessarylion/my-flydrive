@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { HugeiconsIcon } from '@hugeicons/vue'
 import { Cancel01Icon, Download01Icon } from '@hugeicons/core-free-icons'
 import { useFilesStore } from '../stores/files'
+import { renderAsync } from 'docx-preview'
 
 const props = defineProps<{
   driveId: string
@@ -16,6 +17,7 @@ const loading = ref(true)
 const error = ref('')
 const objectUrl = ref('')
 const textContent = ref('')
+const docContainer = ref<HTMLDivElement>()
 
 const ext = computed(() => props.fileName.split('.').pop()?.toLowerCase() || '')
 
@@ -24,6 +26,7 @@ const previewType = computed(() => {
   if (['mp4', 'webm', 'ogv', 'mov'].includes(ext.value)) return 'video'
   if (['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a'].includes(ext.value)) return 'audio'
   if (ext.value === 'pdf') return 'pdf'
+  if (['doc', 'docx'].includes(ext.value)) return 'document'
   if (['txt', 'json', 'xml', 'csv', 'md', 'log'].includes(ext.value)) return 'text'
   return 'unknown'
 })
@@ -48,18 +51,30 @@ const previewUrl = computed(() =>
 
 onMounted(async () => {
   try {
-    if (previewType.value === 'text') {
+    if (previewType.value === 'document') {
       const headers: Record<string, string> = {}
-    const token = localStorage.getItem('token')
-    if (token) headers['Authorization'] = `Bearer ${token}`
-    const res = await fetch(previewUrl.value, { headers })
+      const token = localStorage.getItem('token')
+      if (token) headers['Authorization'] = `Bearer ${token}`
+      const res = await fetch(previewUrl.value, { headers })
+      if (!res.ok) throw new Error('Failed to load file')
+      const blob = await res.blob()
+      loading.value = false
+      await nextTick()
+      if (docContainer.value) {
+        await renderAsync(blob, docContainer.value)
+      }
+    } else if (previewType.value === 'text') {
+      const headers: Record<string, string> = {}
+      const token = localStorage.getItem('token')
+      if (token) headers['Authorization'] = `Bearer ${token}`
+      const res = await fetch(previewUrl.value, { headers })
       if (!res.ok) throw new Error('Failed to load file')
       textContent.value = await res.text()
     } else {
       const headers: Record<string, string> = {}
-    const token = localStorage.getItem('token')
-    if (token) headers['Authorization'] = `Bearer ${token}`
-    const res = await fetch(previewUrl.value, { headers })
+      const token = localStorage.getItem('token')
+      if (token) headers['Authorization'] = `Bearer ${token}`
+      const res = await fetch(previewUrl.value, { headers })
       if (!res.ok) throw new Error('Failed to load file')
       const blob = await res.blob()
       objectUrl.value = URL.createObjectURL(blob)
@@ -146,6 +161,13 @@ onUnmounted(() => document.removeEventListener('keydown', handleKeydown))
           v-else-if="previewType === 'pdf'"
           :src="objectUrl"
           class="w-full h-full rounded-lg border-0"
+        />
+
+        <!-- Document (docx) -->
+        <div
+          v-else-if="previewType === 'document'"
+          ref="docContainer"
+          class="w-full h-full overflow-auto bg-white rounded-lg border border-gray-200"
         />
 
         <!-- Text -->

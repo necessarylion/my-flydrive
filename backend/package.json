@@ -8,6 +8,7 @@
     "start": "bun src/index.ts"
   },
   "devDependencies": {
+    "@types/archiver": "^7.0.0",
     "@types/bun": "latest",
     "@types/uuid": "^11.0.0"
   },
@@ -20,6 +21,7 @@
     "@google-cloud/storage": "^7.19.0",
     "@hono/swagger-ui": "^0.6.0",
     "@hono/zod-openapi": "^1.2.2",
+    "archiver": "^7.0.1",
     "flydrive": "^2.0.0",
     "flydrive-azure": "1.0.0-alpha.3",
     "hono": "^4.12.5",

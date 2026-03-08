@@ -1,12 +1,14 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { listFiles, uploadFile, downloadFile, deleteFile, createFolder, type FileItem } from "../api/client";
+import { listFiles, uploadFile, downloadFile, downloadFolder as downloadFolderApi, renameFile, deleteFile, createFolder, searchFiles as searchFilesApi, type FileItem } from "../api/client";
 
 export const useFilesStore = defineStore("files", () => {
   const files = ref<FileItem[]>([]);
   const currentPath = ref("");
   const loading = ref(false);
   const currentDriveId = ref("");
+  const searchQuery = ref("");
+  const isSearching = ref(false);
 
   async function fetchFiles(driveId: string, path = "") {
     loading.value = true;
@@ -35,8 +37,23 @@ export const useFilesStore = defineStore("files", () => {
     URL.revokeObjectURL(url);
   }
 
-  async function remove(path: string) {
-    await deleteFile(currentDriveId.value, path);
+  async function downloadFolder(path: string) {
+    const { data } = await downloadFolderApi(currentDriveId.value, path);
+    const url = URL.createObjectURL(data);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = (path.split("/").filter(Boolean).pop() || "download") + ".zip";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function rename(path: string, newName: string, isDirectory = false) {
+    await renameFile(currentDriveId.value, path, newName, isDirectory);
+    await fetchFiles(currentDriveId.value, currentPath.value);
+  }
+
+  async function remove(path: string, isDirectory = false) {
+    await deleteFile(currentDriveId.value, path, isDirectory);
     await fetchFiles(currentDriveId.value, currentPath.value);
   }
 
@@ -46,7 +63,31 @@ export const useFilesStore = defineStore("files", () => {
     await fetchFiles(currentDriveId.value, currentPath.value);
   }
 
+  async function search(query: string) {
+    if (!query.trim()) {
+      clearSearch();
+      return;
+    }
+    loading.value = true;
+    searchQuery.value = query;
+    isSearching.value = true;
+    try {
+      const { data } = await searchFilesApi(currentDriveId.value, query);
+      files.value = data.items;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  function clearSearch() {
+    searchQuery.value = "";
+    isSearching.value = false;
+    fetchFiles(currentDriveId.value, currentPath.value);
+  }
+
   function navigateTo(path: string) {
+    searchQuery.value = "";
+    isSearching.value = false;
     fetchFiles(currentDriveId.value, path);
   }
 
@@ -56,5 +97,5 @@ export const useFilesStore = defineStore("files", () => {
     fetchFiles(currentDriveId.value, parts.join("/"));
   }
 
-  return { files, currentPath, loading, currentDriveId, fetchFiles, upload, download, remove, addFolder, navigateTo, navigateUp };
+  return { files, currentPath, loading, currentDriveId, searchQuery, isSearching, fetchFiles, upload, download, downloadFolder, rename, remove, addFolder, search, clearSearch, navigateTo, navigateUp };
 });

@@ -1,15 +1,41 @@
 <script setup lang="ts">
-import { onMounted, computed } from 'vue'
+import { onMounted, computed, ref } from 'vue'
 import { useRouter, useRoute, RouterView } from 'vue-router'
 import { useDrivesStore } from '../stores/drives'
+import { useFilesStore } from '../stores/files'
 import SidebarDriveList from '../components/SidebarDriveList.vue'
 import { HugeiconsIcon } from '@hugeicons/vue'
-import { Search01Icon, Settings01Icon, Logout02Icon } from '@hugeicons/core-free-icons'
+import { Search01Icon, Settings01Icon, Logout02Icon, Cancel01Icon } from '@hugeicons/core-free-icons'
 import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const filesStore = useFilesStore()
+
+const searchInput = ref('')
+let searchDebounce: ReturnType<typeof setTimeout> | null = null
+
+function handleSearch(value: string) {
+  searchInput.value = value
+  if (searchDebounce) clearTimeout(searchDebounce)
+  if (!value.trim()) {
+    if (filesStore.isSearching) filesStore.clearSearch()
+    return
+  }
+  // Only search if a drive is active
+  const driveId = filesStore.currentDriveId || (route.params.driveId as string)
+  if (!driveId) return
+  if (!filesStore.currentDriveId) filesStore.currentDriveId = driveId
+  searchDebounce = setTimeout(() => {
+    filesStore.search(value.trim())
+  }, 300)
+}
+
+function clearSearch() {
+  searchInput.value = ''
+  filesStore.clearSearch()
+}
 
 function handleLogout() {
   authStore.logout()
@@ -45,9 +71,19 @@ function handleDriveSelect(id: string) {
           <HugeiconsIcon :icon="Search01Icon" class="text-gray-500 mr-3" :size="20" />
           <input
             type="text"
+            :value="searchInput"
+            @input="handleSearch(($event.target as HTMLInputElement).value)"
+            @keyup.escape="clearSearch"
             placeholder="Search in Drive"
             class="bg-transparent outline-none w-full text-sm text-gray-700 placeholder-gray-500"
           />
+          <button
+            v-if="searchInput"
+            @click="clearSearch"
+            class="text-gray-400 hover:text-gray-600 ml-2"
+          >
+            <HugeiconsIcon :icon="Cancel01Icon" :size="18" />
+          </button>
         </div>
       </div>
 

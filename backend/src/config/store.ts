@@ -45,7 +45,29 @@ export function updateDrive(id: string, updates: Partial<DriveConfig>) {
   if (updates.isDefault) {
     drives.forEach((d) => (d.isDefault = false));
   }
-  const updated: DriveConfig = { ...drives[idx], ...updates, updatedAt: new Date().toISOString() } as DriveConfig;
+  const existing = drives[idx];
+
+  // Deep merge config: only override fields that are explicitly provided (not null/undefined)
+  let mergedConfig = existing.config;
+  if (updates.config) {
+    const cleaned: Record<string, any> = {};
+    for (const [key, value] of Object.entries(updates.config)) {
+      if (value != null && value !== '') {
+        cleaned[key] = value;
+      }
+    }
+    mergedConfig = { ...existing.config, ...cleaned };
+  }
+
+  // Only apply top-level fields that are explicitly provided
+  const updated: DriveConfig = {
+    ...existing,
+    ...(updates.name != null && { name: updates.name }),
+    ...(updates.type != null && { type: updates.type }),
+    ...(updates.isDefault != null && { isDefault: updates.isDefault }),
+    config: mergedConfig,
+    updatedAt: new Date().toISOString(),
+  };
   drives[idx] = updated;
   saveDrives(drives);
   return drives[idx];

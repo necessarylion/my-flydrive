@@ -7,12 +7,11 @@ import { HugeiconsIcon } from '@hugeicons/vue'
 import {
   PlusSignIcon,
   HardDriveIcon,
-  CloudIcon,
-  Folder01Icon,
   Delete01Icon,
   PencilEdit01Icon,
   FolderOpenIcon,
 } from '@hugeicons/core-free-icons'
+import ProviderIcon from '../components/ProviderIcon.vue'
 
 const store = useDrivesStore()
 const showForm = ref(false)
@@ -54,31 +53,11 @@ const typeColors: Record<string, string> = {
   azure: 'bg-sky-50 text-sky-700',
 }
 
-function getDriveIcon(type: string) {
-  switch (type) {
-    case 'local': return HardDriveIcon
-    case 's3':
-    case 'gcs':
-    case 'azure': return CloudIcon
-    default: return Folder01Icon
-  }
-}
-
-function getDriveIconColor(type: string) {
-  switch (type) {
-    case 'local': return 'text-blue-600'
-    case 's3': return 'text-orange-600'
-    case 'gcs': return 'text-green-600'
-    case 'azure': return 'text-sky-600'
-    default: return 'text-gray-600'
-  }
-}
-
 function getDriveIconBg(type: string) {
   switch (type) {
     case 'local': return 'bg-blue-100'
     case 's3': return 'bg-orange-100'
-    case 'gcs': return 'bg-green-100'
+    case 'gcs': return 'bg-blue-50'
     case 'azure': return 'bg-sky-100'
     default: return 'bg-gray-100'
   }
@@ -121,7 +100,7 @@ function getDriveIconBg(type: string) {
         class="flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-xl hover:border-gray-300 transition-colors group"
       >
         <div class="w-10 h-10 rounded-lg flex items-center justify-center" :class="getDriveIconBg(drive.type)">
-          <HugeiconsIcon :icon="getDriveIcon(drive.type)" :size="20" :class="getDriveIconColor(drive.type)" />
+          <ProviderIcon :type="drive.type" :size="22" />
         </div>
 
         <div class="flex-1 min-w-0">

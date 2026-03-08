@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref, computed, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { onMounted, ref, computed, watch, nextTick } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useFilesStore } from '../stores/files'
 import { useDrivesStore } from '../stores/drives'
 import FilePreview from '../components/FilePreview.vue'
+import ConfirmDialog from '../components/ConfirmDialog.vue'
+import ContextMenu from '../components/ContextMenu.vue'
+import type { MenuItem } from '../components/ContextMenu.vue'
 import { HugeiconsIcon } from '@hugeicons/vue'
 import {
   Folder01Icon,
@@ -16,15 +19,82 @@ import {
   Delete01Icon,
   ArrowTurnBackwardIcon,
   ArrowRight01Icon,
+  FolderZipIcon,
+  PencilEdit01Icon,
+  GridViewIcon,
+  ListViewIcon,
 } from '@hugeicons/core-free-icons'
 
 const route = useRoute()
+const router = useRouter()
 const filesStore = useFilesStore()
 const drivesStore = useDrivesStore()
 const fileInput = ref<HTMLInputElement>()
 const showNewFolder = ref(false)
 const newFolderName = ref('')
 const previewFile = ref<{ path: string; name: string } | null>(null)
+const deleteTarget = ref<{ path: string; name: string; isDirectory: boolean } | null>(null)
+const contextMenu = ref<{ x: number; y: number; items: MenuItem[] } | null>(null)
+const downloadFolderTarget = ref<{ path: string; name: string } | null>(null)
+const renameTarget = ref<{ path: string; name: string; isDirectory: boolean } | null>(null)
+const renameInput = ref('')
+const viewMode = ref<'list' | 'grid'>('list')
+
+function startRename(item: { path: string; name: string; isDirectory: boolean }) {
+  renameTarget.value = item
+  renameInput.value = item.name
+  nextTick(() => {
+    const input = document.querySelector<HTMLInputElement>('.rename-input')
+    if (input) {
+      input.focus()
+      const dotIndex = item.name.lastIndexOf('.')
+      input.setSelectionRange(0, dotIndex > 0 && !item.isDirectory ? dotIndex : item.name.length)
+    }
+  })
+}
+
+async function handleRename() {
+  if (!renameTarget.value || !renameInput.value.trim()) return
+  const newName = renameInput.value.trim()
+  if (newName !== renameTarget.value.name) {
+    await filesStore.rename(renameTarget.value.path, newName, renameTarget.value.isDirectory)
+  }
+  renameTarget.value = null
+}
+
+function handleContextMenu(e: MouseEvent, item: any) {
+  e.preventDefault()
+  const items: MenuItem[] = []
+
+  items.push({
+    label: 'Rename',
+    icon: PencilEdit01Icon,
+    action: () => startRename({ path: item.path, name: item.name, isDirectory: item.isDirectory }),
+  })
+
+  if (item.isDirectory) {
+    items.push({
+      label: 'Download as ZIP',
+      icon: FolderZipIcon,
+      action: () => { downloadFolderTarget.value = { path: item.path, name: item.name } },
+    })
+  } else {
+    items.push({
+      label: 'Download',
+      icon: Download01Icon,
+      action: () => filesStore.download(item.path),
+    })
+  }
+
+  items.push({
+    label: 'Delete',
+    icon: Delete01Icon,
+    danger: true,
+    action: () => { deleteTarget.value = { path: item.path, name: item.name, isDirectory: item.isDirectory } },
+  })
+
+  contextMenu.value = { x: e.clientX, y: e.clientY, items }
+}
 
 const driveId = computed(() => route.params.driveId as string)
 const driveName = computed(() => {
@@ -45,11 +115,19 @@ const breadcrumbs = computed(() => {
 
 onMounted(async () => {
   if (!drivesStore.drives.length) await drivesStore.fetchDrives()
-  filesStore.fetchFiles(driveId.value)
+  const encoded = (route.query.path as string) || ''
+  const initialPath = encoded ? atob(encoded) : ''
+  filesStore.fetchFiles(driveId.value, initialPath)
 })
 
 watch(driveId, (newId) => {
+  router.replace({ query: {} })
   filesStore.fetchFiles(newId)
+})
+
+watch(() => filesStore.currentPath, (path) => {
+  const query = path ? { path: btoa(path) } : {}
+  router.replace({ query })
 })
 
 async function handleUpload(e: Event) {
@@ -83,6 +161,7 @@ function isPreviewable(name: string, size?: number): boolean {
   return [
     'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico',
     'pdf',
+    'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
     'mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a',
     'mp4', 'webm', 'ogv', 'mov',
     'txt', 'json', 'xml', 'csv', 'md', 'log',
@@ -128,7 +207,13 @@ function formatSize(bytes?: number) {
     <!-- Breadcrumbs -->
     <div class="flex items-center justify-between px-6 h-12 border-b border-gray-100">
       <div class="flex items-center text-sm">
-        <template v-for="(crumb, i) in breadcrumbs" :key="crumb.path">
+        <template v-if="filesStore.isSearching">
+          <span class="text-gray-500">Search results for "</span>
+          <span class="font-medium text-gray-900">{{ filesStore.searchQuery }}</span>
+          <span class="text-gray-500">"</span>
+          <span class="text-gray-400 ml-1">({{ filesStore.files.length }} found)</span>
+        </template>
+        <template v-else v-for="(crumb, i) in breadcrumbs" :key="crumb.path">
           <HugeiconsIcon v-if="i > 0" :icon="ArrowRight01Icon" :size="14" class="text-gray-400 mx-1" />
           <button
             @click="filesStore.navigateTo(crumb.path)"
@@ -138,6 +223,24 @@ function formatSize(bytes?: number) {
             {{ crumb.name }}
           </button>
         </template>
+      </div>
+      <div class="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
+          <button
+            @click="viewMode = 'list'"
+            class="p-1.5 rounded-md transition-colors"
+            :class="viewMode === 'list' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-400 hover:text-gray-600'"
+            title="List view"
+          >
+            <HugeiconsIcon :icon="ListViewIcon" :size="16" />
+          </button>
+          <button
+            @click="viewMode = 'grid'"
+            class="p-1.5 rounded-md transition-colors"
+            :class="viewMode === 'grid' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-400 hover:text-gray-600'"
+            title="Grid view"
+          >
+            <HugeiconsIcon :icon="GridViewIcon" :size="16" />
+          </button>
       </div>
     </div>
 
@@ -161,8 +264,8 @@ function formatSize(bytes?: number) {
       Loading...
     </div>
 
-    <!-- File table -->
-    <div v-else class="flex-1 overflow-y-auto">
+    <!-- List view -->
+    <div v-else-if="viewMode === 'list'" class="flex-1 overflow-y-auto">
       <table class="w-full mt-2">
         <thead>
           <tr class="text-xs text-gray-500 font-medium">
@@ -196,6 +299,7 @@ function formatSize(bytes?: number) {
             class="hover:bg-[#f8fafd] border-b border-gray-50 group"
             :class="item.isDirectory || isPreviewable(item.name, item.size) ? 'cursor-pointer' : ''"
             @click="handleClick(item)"
+            @contextmenu="handleContextMenu($event, item)"
           >
             <td class="pl-6 pr-4 py-2">
               <div class="flex items-center gap-3">
@@ -211,7 +315,16 @@ function formatSize(bytes?: number) {
                   :size="20"
                   :class="getFileIconColor(item.name)"
                 />
-                <span class="text-sm text-gray-800">{{ item.name }}</span>
+                <input
+                  v-if="renameTarget?.path === item.path"
+                  v-model="renameInput"
+                  class="rename-input text-sm text-gray-800 bg-white border border-blue-400 rounded px-1.5 py-0.5 outline-none w-64"
+                  @click.stop
+                  @keyup.enter="handleRename"
+                  @keyup.escape="renameTarget = null"
+                  @blur="handleRename"
+                />
+                <span v-else class="text-sm text-gray-800">{{ item.name }}</span>
               </div>
             </td>
             <td class="px-4 py-2 text-xs text-gray-500">{{ formatDate(item.lastModified) }}</td>
@@ -227,7 +340,7 @@ function formatSize(bytes?: number) {
                   <HugeiconsIcon :icon="Download01Icon" :size="16" class="text-gray-600" />
                 </button>
                 <button
-                  @click="filesStore.remove(item.path)"
+                  @click="deleteTarget = { path: item.path, name: item.name, isDirectory: item.isDirectory }"
                   class="p-1.5 rounded-full hover:bg-red-100 transition-colors"
                   title="Delete"
                 >
@@ -247,6 +360,84 @@ function formatSize(bytes?: number) {
       </table>
     </div>
 
+    <!-- Grid view -->
+    <div v-else class="flex-1 overflow-y-auto p-6">
+      <!-- Go up -->
+      <div
+        v-if="filesStore.currentPath"
+        class="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-lg hover:bg-gray-100 cursor-pointer text-sm text-gray-500"
+        @click="filesStore.navigateUp()"
+      >
+        <HugeiconsIcon :icon="ArrowTurnBackwardIcon" :size="16" class="text-gray-400" />
+        ..
+      </div>
+
+      <div class="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-3">
+        <div
+          v-for="item in filesStore.files"
+          :key="item.path"
+          class="group flex flex-col items-center p-4 rounded-xl transition-colors relative"
+          :class="[
+            item.isDirectory ? 'bg-gray-50 hover:bg-gray-100' : 'bg-blue-50/50 hover:bg-blue-50',
+            (item.isDirectory || isPreviewable(item.name, item.size)) ? 'cursor-pointer' : '',
+          ]"
+          @click="handleClick(item)"
+          @contextmenu="handleContextMenu($event, item)"
+        >
+          <!-- Hover actions -->
+          <div class="absolute top-1.5 right-1.5 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" @click.stop>
+            <button
+              v-if="!item.isDirectory"
+              @click="filesStore.download(item.path)"
+              class="p-1 rounded-full hover:bg-gray-200 transition-colors"
+              title="Download"
+            >
+              <HugeiconsIcon :icon="Download01Icon" :size="14" class="text-gray-500" />
+            </button>
+            <button
+              @click="deleteTarget = { path: item.path, name: item.name, isDirectory: item.isDirectory }"
+              class="p-1 rounded-full hover:bg-red-100 transition-colors"
+              title="Delete"
+            >
+              <HugeiconsIcon :icon="Delete01Icon" :size="14" class="text-gray-500 hover:text-red-600" />
+            </button>
+          </div>
+
+          <!-- Icon -->
+          <HugeiconsIcon
+            v-if="item.isDirectory"
+            :icon="Folder01Icon"
+            :size="48"
+            class="text-gray-400 mb-2"
+          />
+          <HugeiconsIcon
+            v-else
+            :icon="getFileIcon(item.name)"
+            :size="48"
+            :class="[getFileIconColor(item.name), 'mb-2']"
+          />
+
+          <!-- Name -->
+          <input
+            v-if="renameTarget?.path === item.path"
+            v-model="renameInput"
+            class="rename-input text-xs text-gray-800 bg-white border border-blue-400 rounded px-1.5 py-0.5 outline-none w-full text-center"
+            @click.stop
+            @keyup.enter="handleRename"
+            @keyup.escape="renameTarget = null"
+            @blur="handleRename"
+          />
+          <span v-else class="text-xs text-gray-700 text-center w-full truncate" :title="item.name">{{ item.name }}</span>
+        </div>
+      </div>
+
+      <!-- Empty state -->
+      <div v-if="filesStore.files.length === 0 && !filesStore.currentPath" class="flex flex-col items-center justify-center py-20">
+        <HugeiconsIcon :icon="File01Icon" :size="56" class="text-gray-200 mb-4" />
+        <p class="text-gray-400 text-sm">Drop files here or use the "New" button to upload</p>
+      </div>
+    </div>
+
     <input ref="fileInput" type="file" class="hidden" @change="handleUpload" />
 
     <!-- File Preview Modal -->
@@ -256,6 +447,35 @@ function formatSize(bytes?: number) {
       :filePath="previewFile.path"
       :fileName="previewFile.name"
       @close="previewFile = null"
+    />
+
+    <!-- Context Menu -->
+    <ContextMenu
+      v-if="contextMenu"
+      :x="contextMenu.x"
+      :y="contextMenu.y"
+      :items="contextMenu.items"
+      @close="contextMenu = null"
+    />
+
+    <!-- Download Folder Confirmation Dialog -->
+    <ConfirmDialog
+      v-if="downloadFolderTarget"
+      title="Download folder as ZIP"
+      :message="`Download &quot;${downloadFolderTarget.name}&quot; as a ZIP file?`"
+      confirmLabel="Download"
+      confirmColor="bg-blue-600 hover:bg-blue-700"
+      @confirm="filesStore.downloadFolder(downloadFolderTarget!.path); downloadFolderTarget = null"
+      @cancel="downloadFolderTarget = null"
+    />
+
+    <!-- Delete Confirmation Dialog -->
+    <ConfirmDialog
+      v-if="deleteTarget"
+      :title="`Delete ${deleteTarget.isDirectory ? 'folder' : 'file'}`"
+      :message="`Are you sure you want to delete &quot;${deleteTarget.name}&quot;? This action cannot be undone.`"
+      @confirm="filesStore.remove(deleteTarget!.path, deleteTarget!.isDirectory); deleteTarget = null"
+      @cancel="deleteTarget = null"
     />
   </div>
 </template>

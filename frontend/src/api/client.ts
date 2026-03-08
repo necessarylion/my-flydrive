@@ -61,8 +61,17 @@ export const uploadFile = (driveId: string, file: File, path = "") => {
 export const downloadFile = (driveId: string, path: string) =>
   api.get(`/files/${driveId}/download`, { params: { path }, responseType: "blob" });
 
-export const deleteFile = (driveId: string, path: string) =>
-  api.delete(`/files/${driveId}`, { params: { path } });
+export const downloadFolder = (driveId: string, path: string) =>
+  api.get(`/files/${driveId}/download-folder`, { params: { path }, responseType: "blob" });
+
+export const renameFile = (driveId: string, path: string, newName: string, isDirectory = false) =>
+  api.patch(`/files/${driveId}/rename`, { path, newName, isDirectory });
+
+export const deleteFile = (driveId: string, path: string, isDirectory = false) =>
+  api.delete(`/files/${driveId}`, { params: { path, isDirectory } });
 
 export const createFolder = (driveId: string, path: string) =>
   api.post(`/files/${driveId}/folder`, { path });
+
+export const searchFiles = (driveId: string, query: string) =>
+  api.get<{ query: string; items: FileItem[] }>(`/files/${driveId}/search`, { params: { q: query } });

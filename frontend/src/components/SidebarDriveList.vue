@@ -7,10 +7,8 @@ import {
   PlusSignIcon,
   FolderAddIcon,
   CloudUploadIcon,
-  HardDriveIcon,
-  CloudIcon,
-  Folder01Icon,
 } from '@hugeicons/core-free-icons'
+import ProviderIcon from './ProviderIcon.vue'
 
 defineProps<{
   drives: Drive[]
@@ -49,15 +47,6 @@ function handleUpload() {
   input.click()
 }
 
-function getDriveIcon(type: string) {
-  switch (type) {
-    case 'local': return HardDriveIcon
-    case 's3':
-    case 'gcs':
-    case 'azure': return CloudIcon
-    default: return Folder01Icon
-  }
-}
 </script>
 
 <template>
@@ -106,11 +95,7 @@ function getDriveIcon(type: string) {
           ? 'bg-[#c2e7ff] text-[#001d35] font-medium'
           : 'text-gray-700 hover:bg-gray-100'"
       >
-        <HugeiconsIcon
-          :icon="getDriveIcon(drive.type)"
-          :size="20"
-          :class="activeDriveId === drive.id ? 'text-[#001d35]' : 'text-gray-500'"
-        />
+        <ProviderIcon :type="drive.type" :size="20" />
         <span class="truncate">{{ drive.name }}</span>
         <span v-if="drive.isDefault" class="ml-auto text-[10px] text-gray-400 uppercase tracking-wider">default</span>
       </button>
