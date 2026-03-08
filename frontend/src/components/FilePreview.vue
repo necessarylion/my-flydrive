@@ -4,6 +4,7 @@ import { HugeiconsIcon } from '@hugeicons/vue'
 import { Cancel01Icon, Download01Icon } from '@hugeicons/core-free-icons'
 import { useFilesStore } from '../stores/files'
 import { renderAsync } from 'docx-preview'
+import { middleTruncate } from '../utils/truncate'
 
 const props = defineProps<{
   driveId: string
@@ -100,10 +101,10 @@ onUnmounted(() => document.removeEventListener('keydown', handleKeydown))
 
 <template>
   <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" @click.self="emit('close')">
-    <div class="bg-panel rounded-2xl shadow-2xl w-[95vw] md:w-[90vw] max-w-5xl h-[90vh] md:h-[85vh] flex flex-col overflow-hidden">
+    <div class="bg-panel rounded-2xl shadow-2xl w-[95vw] md:w-[90vw] max-w-5xl h-[95vh] md:h-[95vh] flex flex-col overflow-hidden">
       <!-- Header -->
       <div class="flex items-center justify-between px-5 py-3 border-b border-divider-light shrink-0">
-        <h3 class="text-sm font-medium text-heading truncate">{{ fileName }}</h3>
+        <h3 class="text-sm font-medium text-heading truncate" :title="fileName">{{ middleTruncate(fileName, 40) }}</h3>
         <div class="flex items-center gap-1">
           <button
             @click="filesStore.download(filePath)"

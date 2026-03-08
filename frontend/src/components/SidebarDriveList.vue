@@ -85,19 +85,19 @@ function handleUpload() {
       >
         <div
           v-if="showMenu"
-          class="absolute top-14 left-0 z-50 w-56 bg-panel rounded-2xl py-1.5 origin-top-left"
+          class="absolute top-14 left-0 z-50 w-56 bg-panel rounded-2xl px-1.5 py-1.5 origin-top-left"
         >
           <button
             @click="handleNewFolder"
-            class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-panel-hover text-sm text-body transition-colors"
+            class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-panel-hover rounded-lg text-sm text-body transition-colors"
           >
             <HugeiconsIcon :icon="FolderAddIcon" :size="20" class="text-subtle" />
             New folder
           </button>
-          <div class="border-t border-divider-light mx-3 my-1"></div>
+          <div class="border-t border-divider-light mx-2 my-1"></div>
           <button
             @click="handleUpload"
-            class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-panel-hover text-sm text-body transition-colors"
+            class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-panel-hover rounded-lg text-sm text-body transition-colors"
           >
             <HugeiconsIcon :icon="CloudUploadIcon" :size="20" class="text-subtle" />
             File upload

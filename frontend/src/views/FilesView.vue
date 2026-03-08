@@ -7,6 +7,7 @@ import FilePreview from '../components/FilePreview.vue'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
 import ContextMenu from '../components/ContextMenu.vue'
 import type { MenuItem } from '../components/ContextMenu.vue'
+import { middleTruncate } from '../utils/truncate'
 import { HugeiconsIcon } from '@hugeicons/vue'
 import {
   Folder01Icon,
@@ -35,6 +36,7 @@ const newFolderName = ref('')
 const previewFile = ref<{ path: string; name: string } | null>(null)
 const deleteTarget = ref<{ path: string; name: string; isDirectory: boolean } | null>(null)
 const contextMenu = ref<{ x: number; y: number; items: MenuItem[] } | null>(null)
+const downloadTarget = ref<{ path: string; name: string } | null>(null)
 const downloadFolderTarget = ref<{ path: string; name: string } | null>(null)
 const renameTarget = ref<{ path: string; name: string; isDirectory: boolean } | null>(null)
 const renameInput = ref('')
@@ -82,7 +84,7 @@ function handleContextMenu(e: MouseEvent, item: any) {
     items.push({
       label: 'Download',
       icon: Download01Icon,
-      action: () => filesStore.download(item.path),
+      action: () => { downloadTarget.value = { path: item.path, name: item.name } },
     })
   }
 
@@ -371,7 +373,7 @@ function formatSize(bytes?: number) {
               <div class="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                 <button
                   v-if="!item.isDirectory"
-                  @click="filesStore.download(item.path)"
+                  @click="downloadTarget = { path: item.path, name: item.name }"
                   class="p-1.5 rounded-full hover:bg-panel-hover transition-colors"
                   title="Download"
                 >
@@ -426,7 +428,7 @@ function formatSize(bytes?: number) {
           <div class="absolute top-1.5 right-1.5 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" @click.stop>
             <button
               v-if="!item.isDirectory"
-              @click="filesStore.download(item.path)"
+              @click="downloadTarget = { path: item.path, name: item.name }"
               class="p-1 rounded-full hover:bg-panel-hover transition-colors"
               title="Download"
             >
@@ -481,7 +483,7 @@ function formatSize(bytes?: number) {
     <!-- Drag overlay -->
     <div
       v-if="isDragging"
-      class="absolute inset-0 bg-blue-50/80 dark:bg-blue-900/60 border-2 border-dashed border-blue-400 dark:border-blue-500 rounded-lg z-50 flex items-center justify-center pointer-events-none"
+      class="absolute inset-2 bg-blue-50/80 dark:bg-blue-900/60 border-2 border-dashed border-blue-400 dark:border-blue-500 rounded-xl z-50 flex items-center justify-center pointer-events-none"
     >
       <div class="text-center">
         <HugeiconsIcon :icon="File01Icon" :size="48" class="text-blue-400 dark:text-blue-300 mx-auto mb-2" />
@@ -508,7 +510,7 @@ function formatSize(bytes?: number) {
         <div class="max-h-48 overflow-y-auto">
           <div v-for="(item, i) in filesStore.uploads" :key="i" class="px-4 py-2 border-b border-divider-light last:border-0">
             <div class="flex items-center justify-between mb-1">
-              <span class="text-xs text-body truncate flex-1 mr-2">{{ item.name }}</span>
+              <span class="text-xs text-body truncate flex-1 mr-2" :title="item.name">{{ middleTruncate(item.name, 30) }}</span>
               <span
                 class="text-xs shrink-0"
                 :class="{
@@ -556,11 +558,22 @@ function formatSize(bytes?: number) {
       @close="contextMenu = null"
     />
 
+    <!-- Download File Confirmation Dialog -->
+    <ConfirmDialog
+      v-if="downloadTarget"
+      title="Download file"
+      :message="`Download &quot;${middleTruncate(downloadTarget.name, 35)}&quot;?`"
+      confirmLabel="Download"
+      confirmColor="bg-blue-600 hover:bg-blue-700"
+      @confirm="filesStore.download(downloadTarget!.path); downloadTarget = null"
+      @cancel="downloadTarget = null"
+    />
+
     <!-- Download Folder Confirmation Dialog -->
     <ConfirmDialog
       v-if="downloadFolderTarget"
       title="Download folder as ZIP"
-      :message="`Download &quot;${downloadFolderTarget.name}&quot; as a ZIP file?`"
+      :message="`Download &quot;${middleTruncate(downloadFolderTarget.name, 35)}&quot; as a ZIP file?`"
       confirmLabel="Download"
       confirmColor="bg-blue-600 hover:bg-blue-700"
       @confirm="filesStore.downloadFolder(downloadFolderTarget!.path); downloadFolderTarget = null"
@@ -571,7 +584,7 @@ function formatSize(bytes?: number) {
     <ConfirmDialog
       v-if="deleteTarget"
       :title="`Delete ${deleteTarget.isDirectory ? 'folder' : 'file'}`"
-      :message="`Are you sure you want to delete &quot;${deleteTarget.name}&quot;? This action cannot be undone.`"
+      :message="`Are you sure you want to delete &quot;${middleTruncate(deleteTarget.name, 35)}&quot;? This action cannot be undone.`"
       @confirm="filesStore.remove(deleteTarget!.path, deleteTarget!.isDirectory); deleteTarget = null"
       @cancel="deleteTarget = null"
     />
