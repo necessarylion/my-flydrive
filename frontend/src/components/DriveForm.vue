@@ -112,31 +112,31 @@ async function handleSubmit() {
 
 <template>
   <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50" @click.self="emit('cancel')">
-    <div class="bg-white rounded-2xl shadow-2xl w-[480px] max-h-[90vh] overflow-y-auto">
-      <div class="px-6 pt-6 pb-4 border-b border-gray-100">
-        <h2 class="text-lg font-medium text-gray-900">{{ isEdit ? 'Edit Drive' : 'Add Drive' }}</h2>
-        <p class="text-sm text-gray-500 mt-0.5">Configure your storage provider</p>
+    <div class="bg-panel rounded-2xl shadow-2xl w-[480px] max-h-[90vh] overflow-y-auto">
+      <div class="px-6 pt-6 pb-4 border-b border-divider-light">
+        <h2 class="text-lg font-medium text-heading">{{ isEdit ? 'Edit Drive' : 'Add Drive' }}</h2>
+        <p class="text-sm text-subtle mt-0.5">Configure your storage provider</p>
       </div>
 
       <form @submit.prevent="handleSubmit" class="px-6 py-5 space-y-4">
         <!-- Name -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+          <label class="block text-sm font-medium text-body mb-1">Name</label>
           <input
             v-model="form.name"
             required
             placeholder="My Drive"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+            class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors bg-input-bg text-heading"
           />
         </div>
 
         <!-- Type -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Provider</label>
+          <label class="block text-sm font-medium text-body mb-1">Provider</label>
           <select
             v-model="form.type"
             :disabled="isEdit"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white disabled:bg-gray-50 disabled:text-gray-500"
+            class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading disabled:bg-panel-alt disabled:text-subtle"
           >
             <option value="local">Local Filesystem</option>
             <option value="s3">Amazon S3</option>
@@ -148,21 +148,21 @@ async function handleSubmit() {
         <!-- Default -->
         <label class="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" v-model="form.isDefault" class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-          <span class="text-sm text-gray-700">Set as default drive</span>
+          <span class="text-sm text-body">Set as default drive</span>
         </label>
 
-        <div class="border-t border-gray-100 pt-4">
-          <p class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">Provider Settings</p>
+        <div class="border-t border-divider-light pt-4">
+          <p class="text-xs font-medium text-muted uppercase tracking-wider mb-3">Provider Settings</p>
 
           <!-- Local -->
           <template v-if="form.type === 'local'">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Root Path</label>
+              <label class="block text-sm font-medium text-body mb-1">Root Path</label>
               <input
                 v-model="form.root"
                 required
                 placeholder="./uploads"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading"
               />
             </div>
           </template>
@@ -171,24 +171,24 @@ async function handleSubmit() {
           <template v-if="form.type === 's3'">
             <div class="space-y-3">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Bucket</label>
-                <input v-model="form.bucket" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+                <label class="block text-sm font-medium text-body mb-1">Bucket</label>
+                <input v-model="form.bucket" class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Region</label>
-                <input v-model="form.region" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+                <label class="block text-sm font-medium text-body mb-1">Region</label>
+                <input v-model="form.region" class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Access Key ID</label>
-                <input v-model="form.accessKeyId" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+                <label class="block text-sm font-medium text-body mb-1">Access Key ID</label>
+                <input v-model="form.accessKeyId" class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Secret Access Key</label>
-                <input v-model="form.secretAccessKey" type="password" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+                <label class="block text-sm font-medium text-body mb-1">Secret Access Key</label>
+                <input v-model="form.secretAccessKey" type="password" class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Endpoint <span class="text-gray-400 font-normal">(optional, for MinIO/R2)</span></label>
-                <input v-model="form.endpoint" placeholder="https://..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+                <label class="block text-sm font-medium text-body mb-1">Endpoint <span class="text-muted font-normal">(optional, for MinIO/R2)</span></label>
+                <input v-model="form.endpoint" placeholder="https://..." class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading" />
               </div>
             </div>
           </template>
@@ -197,16 +197,16 @@ async function handleSubmit() {
           <template v-if="form.type === 'gcs'">
             <div class="space-y-3">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Bucket</label>
-                <input v-model="form.gcsBucket" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+                <label class="block text-sm font-medium text-body mb-1">Bucket</label>
+                <input v-model="form.gcsBucket" class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Project ID</label>
-                <input v-model="form.projectId" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+                <label class="block text-sm font-medium text-body mb-1">Project ID</label>
+                <input v-model="form.projectId" class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Key Filename <span class="text-gray-400 font-normal">(optional)</span></label>
-                <input v-model="form.keyFilename" placeholder="/path/to/keyfile.json" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+                <label class="block text-sm font-medium text-body mb-1">Key Filename <span class="text-muted font-normal">(optional)</span></label>
+                <input v-model="form.keyFilename" placeholder="/path/to/keyfile.json" class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading" />
               </div>
             </div>
           </template>
@@ -215,24 +215,24 @@ async function handleSubmit() {
           <template v-if="form.type === 'azure'">
             <div class="space-y-3">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Connection String</label>
-                <input v-model="form.connectionString" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+                <label class="block text-sm font-medium text-body mb-1">Connection String</label>
+                <input v-model="form.connectionString" class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Container</label>
-                <input v-model="form.container" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+                <label class="block text-sm font-medium text-body mb-1">Container</label>
+                <input v-model="form.container" class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading" />
               </div>
             </div>
           </template>
         </div>
 
-        <div v-if="error" class="text-red-600 text-sm bg-red-50 rounded-lg p-3">{{ error }}</div>
+        <div v-if="error" class="text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 rounded-lg p-3">{{ error }}</div>
 
         <div class="flex justify-end gap-2 pt-2">
           <button
             type="button"
             @click="emit('cancel')"
-            class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            class="px-4 py-2 text-sm font-medium text-body hover:bg-panel-alt rounded-lg transition-colors"
           >
             Cancel
           </button>

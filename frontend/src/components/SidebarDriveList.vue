@@ -68,9 +68,9 @@ function handleUpload() {
     <div class="relative mb-4" ref="menuRef">
       <button
         @click="handleNewClick"
-        class="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-white hover:bg-gray-50 transition-all text-sm font-medium text-gray-700 active:scale-[0.98]"
+        class="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-panel hover:bg-panel-hover transition-all text-sm font-medium text-body active:scale-[0.98]"
       >
-        <HugeiconsIcon :icon="PlusSignIcon" :size="22" class="text-gray-600" />
+        <HugeiconsIcon :icon="PlusSignIcon" :size="22" class="text-subtle" />
         New
       </button>
 
@@ -85,21 +85,21 @@ function handleUpload() {
       >
         <div
           v-if="showMenu"
-          class="absolute top-14 left-0 z-50 w-56 bg-white rounded-2xl py-1.5 origin-top-left"
+          class="absolute top-14 left-0 z-50 w-56 bg-panel rounded-2xl py-1.5 origin-top-left"
         >
           <button
             @click="handleNewFolder"
-            class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-sm text-gray-700 transition-colors"
+            class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-panel-hover text-sm text-body transition-colors"
           >
-            <HugeiconsIcon :icon="FolderAddIcon" :size="20" class="text-gray-500" />
+            <HugeiconsIcon :icon="FolderAddIcon" :size="20" class="text-subtle" />
             New folder
           </button>
-          <div class="border-t border-gray-100 mx-3 my-1"></div>
+          <div class="border-t border-divider-light mx-3 my-1"></div>
           <button
             @click="handleUpload"
-            class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-sm text-gray-700 transition-colors"
+            class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-panel-hover text-sm text-body transition-colors"
           >
-            <HugeiconsIcon :icon="CloudUploadIcon" :size="20" class="text-gray-500" />
+            <HugeiconsIcon :icon="CloudUploadIcon" :size="20" class="text-subtle" />
             File upload
           </button>
         </div>
@@ -109,8 +109,8 @@ function handleUpload() {
     <!-- Drive list -->
     <div class="flex-1 overflow-y-auto">
       <div class="flex items-center gap-2 px-3 mb-1.5">
-        <HugeiconsIcon :icon="HardDriveIcon" :size="14" class="text-gray-400" />
-        <span class="text-xs font-medium text-gray-400 uppercase tracking-wider">Drives</span>
+        <HugeiconsIcon :icon="HardDriveIcon" :size="14" class="text-muted" />
+        <span class="text-xs font-medium text-muted uppercase tracking-wider">Drives</span>
       </div>
       <nav class="flex flex-col gap-0.5">
         <button
@@ -119,15 +119,15 @@ function handleUpload() {
           @click="emit('select', drive.id)"
           class="group flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all text-left"
           :class="activeDriveId === drive.id
-            ? 'bg-[#c2e7ff] text-[#001d35] font-medium'
-            : 'text-gray-700 hover:bg-black/4'"
+            ? 'bg-panel-active text-panel-active-text font-medium'
+            : 'text-body hover:bg-btn-hover'"
         >
           <ProviderIcon :type="drive.type" :size="20" />
           <span class="truncate flex-1">{{ drive.name }}</span>
           <span
             v-if="drive.isDefault"
             class="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full font-medium uppercase tracking-wider"
-            :class="activeDriveId === drive.id ? 'bg-[#001d35]/10 text-[#001d35]/60' : 'bg-gray-100 text-gray-400'"
+            :class="activeDriveId === drive.id ? 'bg-badge-active-bg text-badge-active-text' : 'bg-badge-bg text-badge-text'"
           >
             default
           </span>
@@ -136,12 +136,12 @@ function handleUpload() {
     </div>
 
     <!-- Bottom section -->
-    <div class="pt-2 mt-auto border-t border-gray-200/60">
+    <div class="pt-2 mt-auto border-t border-divider">
       <router-link
         to="/drives"
-        class="flex items-center gap-3 px-3 py-2 rounded-full text-sm text-gray-500 hover:bg-black/4 hover:text-gray-700 transition-colors"
+        class="flex items-center gap-3 px-3 py-2 rounded-full text-sm text-subtle hover:bg-btn-hover hover:text-body transition-colors"
       >
-        <HugeiconsIcon :icon="Settings01Icon" :size="18" class="text-gray-400" />
+        <HugeiconsIcon :icon="Settings01Icon" :size="18" class="text-muted" />
         Manage drives
       </router-link>
     </div>

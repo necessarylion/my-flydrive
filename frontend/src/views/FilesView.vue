@@ -243,30 +243,30 @@ function formatSize(bytes?: number) {
     @drop="handleDrop"
   >
     <!-- Breadcrumbs -->
-    <div class="flex items-center justify-between px-3 md:px-6 h-12 border-b border-gray-100 gap-2">
+    <div class="flex items-center justify-between px-3 md:px-6 h-12 border-b border-divider-light gap-2">
       <div class="flex items-center text-sm min-w-0 overflow-x-auto">
         <template v-if="filesStore.isSearching">
-          <span class="text-gray-500">Search results for "</span>
-          <span class="font-medium text-gray-900">{{ filesStore.searchQuery }}</span>
-          <span class="text-gray-500">"</span>
-          <span class="text-gray-400 ml-1">({{ filesStore.files.length }} found)</span>
+          <span class="text-subtle">Search results for "</span>
+          <span class="font-medium text-heading">{{ filesStore.searchQuery }}</span>
+          <span class="text-subtle">"</span>
+          <span class="text-muted ml-1">({{ filesStore.files.length }} found)</span>
         </template>
         <template v-else v-for="(crumb, i) in breadcrumbs" :key="crumb.path">
-          <HugeiconsIcon v-if="i > 0" :icon="ArrowRight01Icon" :size="14" class="text-gray-400 mx-1" />
+          <HugeiconsIcon v-if="i > 0" :icon="ArrowRight01Icon" :size="14" class="text-muted mx-1" />
           <button
             @click="filesStore.navigateTo(crumb.path)"
-            class="px-1.5 py-0.5 rounded hover:bg-gray-100 transition-colors"
-            :class="i === breadcrumbs.length - 1 ? 'font-medium text-gray-900' : 'text-gray-500'"
+            class="px-1.5 py-0.5 rounded hover:bg-panel-alt transition-colors"
+            :class="i === breadcrumbs.length - 1 ? 'font-medium text-heading' : 'text-subtle'"
           >
             {{ crumb.name }}
           </button>
         </template>
       </div>
-      <div class="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5 shrink-0">
+      <div class="flex items-center gap-0.5 bg-panel-alt rounded-lg p-0.5 shrink-0">
           <button
             @click="viewMode = 'list'"
             class="p-1.5 rounded-md transition-colors"
-            :class="viewMode === 'list' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-400 hover:text-gray-600'"
+            :class="viewMode === 'list' ? 'bg-panel shadow-sm text-heading' : 'text-muted hover:text-subtle'"
             title="List view"
           >
             <HugeiconsIcon :icon="ListViewIcon" :size="16" />
@@ -274,7 +274,7 @@ function formatSize(bytes?: number) {
           <button
             @click="viewMode = 'grid'"
             class="p-1.5 rounded-md transition-colors"
-            :class="viewMode === 'grid' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-400 hover:text-gray-600'"
+            :class="viewMode === 'grid' ? 'bg-panel shadow-sm text-heading' : 'text-muted hover:text-subtle'"
             title="Grid view"
           >
             <HugeiconsIcon :icon="GridViewIcon" :size="16" />
@@ -283,22 +283,22 @@ function formatSize(bytes?: number) {
     </div>
 
     <!-- New folder inline input -->
-    <div v-if="showNewFolder" class="flex flex-wrap items-center gap-2 px-3 md:px-6 py-2 bg-blue-50 border-b border-blue-100">
-      <HugeiconsIcon :icon="Folder01Icon" :size="20" class="text-blue-500" />
+    <div v-if="showNewFolder" class="flex flex-wrap items-center gap-2 px-3 md:px-6 py-2 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-100 dark:border-blue-800">
+      <HugeiconsIcon :icon="Folder01Icon" :size="20" class="text-blue-500 dark:text-blue-400" />
       <input
         v-model="newFolderName"
         placeholder="Folder name"
-        class="bg-white border border-blue-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-blue-400 w-64"
+        class="bg-input-bg border border-blue-200 dark:border-blue-700 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-blue-400 dark:focus:border-blue-500 w-64"
         @keyup.enter="handleCreateFolder"
         @keyup.escape="showNewFolder = false"
         autofocus
       />
       <button @click="handleCreateFolder" class="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700">Create</button>
-      <button @click="showNewFolder = false" class="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700">Cancel</button>
+      <button @click="showNewFolder = false" class="px-3 py-1.5 text-xs text-subtle hover:text-body">Cancel</button>
     </div>
 
     <!-- Loading -->
-    <div v-if="filesStore.loading" class="flex-1 flex items-center justify-center text-gray-400">
+    <div v-if="filesStore.loading" class="flex-1 flex items-center justify-center text-muted">
       Loading...
     </div>
 
@@ -306,9 +306,9 @@ function formatSize(bytes?: number) {
     <div v-else-if="viewMode === 'list'" class="flex-1 overflow-y-auto">
       <table class="w-full mt-2">
         <thead>
-          <tr class="text-xs text-gray-500">
+          <tr class="text-xs text-subtle">
             <th class="text-left pl-3 md:pl-6 pr-4 py-2">Name</th>
-            <th class="text-left px-4 py-2 w-40 hidden md:table-cell">Last modified</th>
+            <th class="text-left px-4 py-2 w-45 hidden md:table-cell">Last modified</th>
             <th class="text-left px-4 py-2 w-28 hidden sm:table-cell">Size</th>
             <th class="w-12 md:w-20 pr-2 md:pr-6"></th>
           </tr>
@@ -317,13 +317,13 @@ function formatSize(bytes?: number) {
           <!-- Go up -->
           <tr
             v-if="filesStore.currentPath"
-            class="hover:bg-[#f8fafd] cursor-pointer border-b border-gray-50"
+            class="hover:bg-panel-hover cursor-pointer border-b border-divider-light"
             @click="filesStore.navigateUp()"
           >
             <td class="pl-3 md:pl-6 pr-4 py-2">
               <div class="flex items-center gap-3">
-                <HugeiconsIcon :icon="ArrowTurnBackwardIcon" :size="18" class="text-gray-400" />
-                <span class="text-sm text-gray-500">..</span>
+                <HugeiconsIcon :icon="ArrowTurnBackwardIcon" :size="18" class="text-muted" />
+                <span class="text-sm text-subtle">..</span>
               </div>
             </td>
             <td class="hidden md:table-cell"></td>
@@ -334,7 +334,7 @@ function formatSize(bytes?: number) {
           <tr
             v-for="item in filesStore.files"
             :key="item.path"
-            class="hover:bg-[#f8fafd] border-b border-gray-50 group"
+            class="hover:bg-panel-hover border-b border-divider-light group"
             :class="item.isDirectory || isPreviewable(item.name, item.size) ? 'cursor-pointer' : ''"
             @click="handleClick(item)"
             @contextmenu="handleContextMenu($event, item)"
@@ -345,7 +345,7 @@ function formatSize(bytes?: number) {
                   v-if="item.isDirectory"
                   :icon="Folder01Icon"
                   :size="20"
-                  class="text-gray-500 shrink-0"
+                  class="text-subtle shrink-0"
                 />
                 <HugeiconsIcon
                   v-else
@@ -356,33 +356,33 @@ function formatSize(bytes?: number) {
                 <input
                   v-if="renameTarget?.path === item.path"
                   v-model="renameInput"
-                  class="rename-input text-sm text-gray-800 bg-white border border-blue-400 rounded px-1.5 py-0.5 outline-none w-64"
+                  class="rename-input text-sm text-heading bg-input-bg border border-blue-400 dark:border-blue-500 rounded px-1.5 py-0.5 outline-none w-64"
                   @click.stop
                   @keyup.enter="handleRename"
                   @keyup.escape="renameTarget = null"
                   @blur="handleRename"
                 />
-                <span v-else class="text-sm text-gray-800 break-all line-clamp-2" :title="item.name">{{ item.name }}</span>
+                <span v-else class="text-sm text-heading break-all line-clamp-2" :title="item.name">{{ item.name }}</span>
               </div>
             </td>
-            <td class="px-4 py-2 text-xs text-gray-500 hidden md:table-cell">{{ formatDate(item.lastModified) }}</td>
-            <td class="px-4 py-2 text-xs text-gray-500 hidden sm:table-cell">{{ item.isDirectory ? '\u2014' : formatSize(item.size) }}</td>
+            <td class="px-4 py-2 text-xs text-subtle hidden md:table-cell">{{ formatDate(item.lastModified) }}</td>
+            <td class="px-4 py-2 text-xs text-subtle hidden sm:table-cell">{{ item.isDirectory ? '\u2014' : formatSize(item.size) }}</td>
             <td class="pr-2 md:pr-6 py-2" @click.stop>
               <div class="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                 <button
                   v-if="!item.isDirectory"
                   @click="filesStore.download(item.path)"
-                  class="p-1.5 rounded-full hover:bg-gray-200 transition-colors"
+                  class="p-1.5 rounded-full hover:bg-panel-hover transition-colors"
                   title="Download"
                 >
-                  <HugeiconsIcon :icon="Download01Icon" :size="16" class="text-gray-600" />
+                  <HugeiconsIcon :icon="Download01Icon" :size="16" class="text-subtle" />
                 </button>
                 <button
                   @click="deleteTarget = { path: item.path, name: item.name, isDirectory: item.isDirectory }"
-                  class="p-1.5 rounded-full hover:bg-red-100 transition-colors"
+                  class="p-1.5 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                   title="Delete"
                 >
-                  <HugeiconsIcon :icon="Delete01Icon" :size="16" class="text-gray-600 hover:text-red-600" />
+                  <HugeiconsIcon :icon="Delete01Icon" :size="16" class="text-subtle hover:text-red-600 dark:hover:text-red-400" />
                 </button>
               </div>
             </td>
@@ -390,8 +390,8 @@ function formatSize(bytes?: number) {
 
           <tr v-if="filesStore.files.length === 0 && !filesStore.currentPath">
             <td colspan="4" class="text-center py-20">
-              <HugeiconsIcon :icon="File01Icon" :size="56" class="text-gray-200 mx-auto mb-4" />
-              <p class="text-gray-400 text-sm">Drop files here or use the "New" button to upload</p>
+              <HugeiconsIcon :icon="File01Icon" :size="56" class="text-faint mx-auto mb-4" />
+              <p class="text-muted text-sm">Drop files here or use the "New" button to upload</p>
             </td>
           </tr>
         </tbody>
@@ -403,10 +403,10 @@ function formatSize(bytes?: number) {
       <!-- Go up -->
       <div
         v-if="filesStore.currentPath"
-        class="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-lg hover:bg-gray-100 cursor-pointer text-sm text-gray-500"
+        class="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-lg hover:bg-panel-alt cursor-pointer text-sm text-subtle"
         @click="filesStore.navigateUp()"
       >
-        <HugeiconsIcon :icon="ArrowTurnBackwardIcon" :size="16" class="text-gray-400" />
+        <HugeiconsIcon :icon="ArrowTurnBackwardIcon" :size="16" class="text-muted" />
         ..
       </div>
 
@@ -416,7 +416,7 @@ function formatSize(bytes?: number) {
           :key="item.path"
           class="group flex flex-col items-center p-4 rounded-xl transition-colors relative"
           :class="[
-            item.isDirectory ? 'bg-gray-50 hover:bg-gray-100' : 'bg-blue-50/50 hover:bg-blue-50',
+            item.isDirectory ? 'bg-panel-alt hover:bg-panel-alt' : 'bg-blue-50/50 dark:bg-blue-900/20 hover:bg-blue-50 dark:hover:bg-blue-900/30',
             (item.isDirectory || isPreviewable(item.name, item.size)) ? 'cursor-pointer' : '',
           ]"
           @click="handleClick(item)"
@@ -427,17 +427,17 @@ function formatSize(bytes?: number) {
             <button
               v-if="!item.isDirectory"
               @click="filesStore.download(item.path)"
-              class="p-1 rounded-full hover:bg-gray-200 transition-colors"
+              class="p-1 rounded-full hover:bg-panel-hover transition-colors"
               title="Download"
             >
-              <HugeiconsIcon :icon="Download01Icon" :size="14" class="text-gray-500" />
+              <HugeiconsIcon :icon="Download01Icon" :size="14" class="text-subtle" />
             </button>
             <button
               @click="deleteTarget = { path: item.path, name: item.name, isDirectory: item.isDirectory }"
-              class="p-1 rounded-full hover:bg-red-100 transition-colors"
+              class="p-1 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
               title="Delete"
             >
-              <HugeiconsIcon :icon="Delete01Icon" :size="14" class="text-gray-500 hover:text-red-600" />
+              <HugeiconsIcon :icon="Delete01Icon" :size="14" class="text-subtle hover:text-red-600 dark:hover:text-red-400" />
             </button>
           </div>
 
@@ -446,7 +446,7 @@ function formatSize(bytes?: number) {
             v-if="item.isDirectory"
             :icon="Folder01Icon"
             :size="48"
-            class="text-gray-400 mb-2"
+            class="text-muted mb-2"
           />
           <HugeiconsIcon
             v-else
@@ -459,20 +459,20 @@ function formatSize(bytes?: number) {
           <input
             v-if="renameTarget?.path === item.path"
             v-model="renameInput"
-            class="rename-input text-xs text-gray-800 bg-white border border-blue-400 rounded px-1.5 py-0.5 outline-none w-full text-center"
+            class="rename-input text-xs text-heading bg-input-bg border border-blue-400 dark:border-blue-500 rounded px-1.5 py-0.5 outline-none w-full text-center"
             @click.stop
             @keyup.enter="handleRename"
             @keyup.escape="renameTarget = null"
             @blur="handleRename"
           />
-          <span v-else class="text-xs text-gray-700 text-center w-full break-all line-clamp-2" :title="item.name">{{ item.name }}</span>
+          <span v-else class="text-xs text-body text-center w-full break-all line-clamp-2" :title="item.name">{{ item.name }}</span>
         </div>
       </div>
 
       <!-- Empty state -->
       <div v-if="filesStore.files.length === 0 && !filesStore.currentPath" class="flex flex-col items-center justify-center py-20">
-        <HugeiconsIcon :icon="File01Icon" :size="56" class="text-gray-200 mb-4" />
-        <p class="text-gray-400 text-sm">Drop files here or use the "New" button to upload</p>
+        <HugeiconsIcon :icon="File01Icon" :size="56" class="text-faint mb-4" />
+        <p class="text-muted text-sm">Drop files here or use the "New" button to upload</p>
       </div>
     </div>
 
@@ -481,11 +481,11 @@ function formatSize(bytes?: number) {
     <!-- Drag overlay -->
     <div
       v-if="isDragging"
-      class="absolute inset-0 bg-blue-50/80 border-2 border-dashed border-blue-400 rounded-lg z-50 flex items-center justify-center pointer-events-none"
+      class="absolute inset-0 bg-blue-50/80 dark:bg-blue-900/60 border-2 border-dashed border-blue-400 dark:border-blue-500 rounded-lg z-50 flex items-center justify-center pointer-events-none"
     >
       <div class="text-center">
-        <HugeiconsIcon :icon="File01Icon" :size="48" class="text-blue-400 mx-auto mb-2" />
-        <p class="text-blue-600 font-medium">Drop files here to upload</p>
+        <HugeiconsIcon :icon="File01Icon" :size="48" class="text-blue-400 dark:text-blue-300 mx-auto mb-2" />
+        <p class="text-blue-600 dark:text-blue-400 font-medium">Drop files here to upload</p>
       </div>
     </div>
 
@@ -500,28 +500,28 @@ function formatSize(bytes?: number) {
     >
       <div
         v-if="filesStore.uploads.length"
-        class="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 z-50 md:w-80 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden"
+        class="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 z-50 md:w-80 bg-panel rounded-xl shadow-lg border border-divider overflow-hidden"
       >
-        <div class="px-4 py-2.5 bg-gray-50 border-b border-gray-100 text-sm font-medium text-gray-700">
+        <div class="px-4 py-2.5 bg-panel-alt border-b border-divider-light text-sm font-medium text-body">
           Uploading {{ filesStore.uploads.length }} file{{ filesStore.uploads.length > 1 ? 's' : '' }}
         </div>
         <div class="max-h-48 overflow-y-auto">
-          <div v-for="(item, i) in filesStore.uploads" :key="i" class="px-4 py-2 border-b border-gray-50 last:border-0">
+          <div v-for="(item, i) in filesStore.uploads" :key="i" class="px-4 py-2 border-b border-divider-light last:border-0">
             <div class="flex items-center justify-between mb-1">
-              <span class="text-xs text-gray-700 truncate flex-1 mr-2">{{ item.name }}</span>
+              <span class="text-xs text-body truncate flex-1 mr-2">{{ item.name }}</span>
               <span
                 class="text-xs shrink-0"
                 :class="{
                   'text-red-500': item.status === 'error',
                   'text-green-500': item.status === 'done',
                   'text-amber-500': item.status === 'processing',
-                  'text-gray-400': item.status === 'uploading',
+                  'text-muted': item.status === 'uploading',
                 }"
               >
                 {{ item.status === 'error' ? 'Failed' : item.status === 'done' ? 'Done' : item.status === 'processing' ? 'Saving to cloud...' : item.progress + '%' }}
               </span>
             </div>
-            <div class="h-1 bg-gray-100 rounded-full overflow-hidden">
+            <div class="h-1 bg-panel-alt rounded-full overflow-hidden">
               <div
                 class="h-full rounded-full transition-all duration-300"
                 :class="{

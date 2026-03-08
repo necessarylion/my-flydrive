@@ -1,5 +1,97 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ─── Theme Colors ─── */
+/* Change these values to customize the look of the app. */
+/* Light and dark mode colors are defined separately below. */
+
+:root {
+  --page: #f0f4f9;
+  --panel: #ffffff;
+  --panel-alt: #f9fafb;
+  --panel-hover: #f8fafd;
+  --panel-active: #c2e7ff;
+  --panel-active-text: #001d35;
+  --overlay: rgba(0, 0, 0, 0.4);
+  --divider: #e5e7eb;
+  --divider-light: #f3f4f6;
+  --heading: #111827;
+  --body: #374151;
+  --subtle: #6b7280;
+  --muted: #9ca3af;
+  --faint: #d1d5db;
+  --input-bg: #ffffff;
+  --input-border: #d1d5db;
+  --btn-hover: rgba(0, 0, 0, 0.05);
+  --badge-bg: #f3f4f6;
+  --badge-text: #9ca3af;
+  --badge-active-bg: rgba(0, 29, 53, 0.1);
+  --badge-active-text: rgba(0, 29, 53, 0.6);
+}
+
+.dark {
+  --page: #0f1115;
+  --panel: #1a1d23;
+  --panel-alt: #15171c;
+  --panel-hover: #252830;
+  --panel-active: rgba(56, 139, 253, 0.2);
+  --panel-active-text: #79b8ff;
+  --overlay: rgba(0, 0, 0, 0.6);
+  --divider: #2d3139;
+  --divider-light: #21252c;
+  --heading: #e6edf3;
+  --body: #b1bac4;
+  --subtle: #8b949e;
+  --muted: #565d67;
+  --faint: #373c44;
+  --input-bg: #15171c;
+  --input-border: #2d3139;
+  --btn-hover: rgba(255, 255, 255, 0.08);
+  --badge-bg: #2d3139;
+  --badge-text: #8b949e;
+  --badge-active-bg: rgba(121, 184, 255, 0.12);
+  --badge-active-text: rgba(121, 184, 255, 0.7);
+}
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
 @theme {
   --font-sans: "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
+
+  /* Surfaces */
+  --color-page: var(--page);
+  --color-panel: var(--panel);
+  --color-panel-alt: var(--panel-alt);
+  --color-panel-hover: var(--panel-hover);
+  --color-panel-active: var(--panel-active);
+  --color-panel-active-text: var(--panel-active-text);
+  --color-overlay: var(--overlay);
+
+  /* Borders */
+  --color-divider: var(--divider);
+  --color-divider-light: var(--divider-light);
+
+  /* Text */
+  --color-heading: var(--heading);
+  --color-body: var(--body);
+  --color-subtle: var(--subtle);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+
+  /* Inputs */
+  --color-input-bg: var(--input-bg);
+  --color-input-border: var(--input-border);
+
+  /* Interactive */
+  --color-btn-hover: var(--btn-hover);
+
+  /* Badges */
+  --color-badge-bg: var(--badge-bg);
+  --color-badge-text: var(--badge-text);
+  --color-badge-active-bg: var(--badge-active-bg);
+  --color-badge-active-text: var(--badge-active-text);
 }

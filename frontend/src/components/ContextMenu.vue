@@ -57,7 +57,7 @@ onUnmounted(() => {
   <Teleport to="body">
     <div
       ref="menuRef"
-      class="fixed z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-44"
+      class="fixed z-50 bg-panel rounded-lg shadow-lg border border-divider py-1 min-w-44"
       :style="{ left: `${adjustedX}px`, top: `${adjustedY}px` }"
     >
       <button
@@ -65,7 +65,7 @@ onUnmounted(() => {
         :key="i"
         @click="item.action(); emit('close')"
         class="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm transition-colors"
-        :class="item.danger ? 'text-red-600 hover:bg-red-50' : 'text-gray-700 hover:bg-gray-100'"
+        :class="item.danger ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30' : 'text-body hover:bg-panel-alt'"
       >
         <HugeiconsIcon v-if="item.icon" :icon="item.icon" :size="16" />
         {{ item.label }}

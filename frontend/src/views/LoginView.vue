@@ -65,17 +65,17 @@ async function handleLogin() {
     </div>
 
     <!-- Right panel - login form -->
-    <div class="flex-1 flex items-center justify-center bg-[#f0f4f9] px-6">
+    <div class="flex-1 flex items-center justify-center bg-page px-6">
       <div class="w-full max-w-sm">
         <!-- Mobile logo -->
         <div class="flex items-center justify-center gap-3 mb-10 lg:hidden">
           <img :src="appLogo" class="w-10 h-10" alt="My Flydrive" />
-          <span class="text-xl text-gray-700 font-semibold tracking-tight">My Flydrive</span>
+          <span class="text-xl text-body font-semibold tracking-tight">My Flydrive</span>
         </div>
 
         <div>
-          <h2 class="text-2xl font-bold text-gray-900 mb-1">Sign in</h2>
-          <p class="text-sm text-gray-500 mb-8">Enter your credentials to access your drives</p>
+          <h2 class="text-2xl font-bold text-heading mb-1">Sign in</h2>
+          <p class="text-sm text-subtle mb-8">Enter your credentials to access your drives</p>
 
           <Transition
             enter-active-class="transition duration-200 ease-out"
@@ -85,7 +85,7 @@ async function handleLogin() {
             leave-from-class="opacity-100 translate-y-0"
             leave-to-class="opacity-0 -translate-y-1"
           >
-            <div v-if="error" class="mb-4 flex items-start gap-2 text-red-600 text-sm bg-red-50 rounded-2xl p-4">
+            <div v-if="error" class="mb-4 flex items-start gap-2 text-red-600 text-sm bg-red-50 dark:bg-red-900/20 rounded-2xl p-4">
               <svg class="w-5 h-5 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
               </svg>
@@ -95,26 +95,26 @@ async function handleLogin() {
 
           <form @submit.prevent="handleLogin" class="space-y-5">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+              <label class="block text-sm font-medium text-body mb-1.5">Email</label>
               <input
                 v-model="email"
                 type="email"
                 required
                 autofocus
                 placeholder="admin@mydrive.com"
-                class="w-full px-4 py-3 bg-white rounded-2xl text-sm outline-none placeholder-gray-400 text-gray-900 focus:ring-2 focus:ring-blue-500/30 transition-all"
+                class="w-full px-4 py-3 bg-input-bg rounded-2xl text-sm outline-none placeholder-muted text-heading focus:ring-2 focus:ring-blue-500/30 transition-all"
               />
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+              <label class="block text-sm font-medium text-body mb-1.5">Password</label>
               <div class="relative">
                 <input
                   v-model="password"
                   :type="showPassword ? 'text' : 'password'"
                   required
                   placeholder="Enter password"
-                  class="w-full px-4 py-3 bg-white rounded-2xl text-sm outline-none placeholder-gray-400 text-gray-900 focus:ring-2 focus:ring-blue-500/30 transition-all pr-11"
+                  class="w-full px-4 py-3 bg-input-bg rounded-2xl text-sm outline-none placeholder-muted text-heading focus:ring-2 focus:ring-blue-500/30 transition-all pr-11"
                 />
                 <button
                   type="button"

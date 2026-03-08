@@ -100,31 +100,31 @@ onUnmounted(() => document.removeEventListener('keydown', handleKeydown))
 
 <template>
   <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" @click.self="emit('close')">
-    <div class="bg-white rounded-2xl shadow-2xl w-[95vw] md:w-[90vw] max-w-5xl h-[90vh] md:h-[85vh] flex flex-col overflow-hidden">
+    <div class="bg-panel rounded-2xl shadow-2xl w-[95vw] md:w-[90vw] max-w-5xl h-[90vh] md:h-[85vh] flex flex-col overflow-hidden">
       <!-- Header -->
-      <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100 shrink-0">
-        <h3 class="text-sm font-medium text-gray-900 truncate">{{ fileName }}</h3>
+      <div class="flex items-center justify-between px-5 py-3 border-b border-divider-light shrink-0">
+        <h3 class="text-sm font-medium text-heading truncate">{{ fileName }}</h3>
         <div class="flex items-center gap-1">
           <button
             @click="filesStore.download(filePath)"
-            class="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            class="p-2 rounded-full hover:bg-panel-alt transition-colors"
             title="Download"
           >
-            <HugeiconsIcon :icon="Download01Icon" :size="18" class="text-gray-600" />
+            <HugeiconsIcon :icon="Download01Icon" :size="18" class="text-subtle" />
           </button>
           <button
             @click="emit('close')"
-            class="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            class="p-2 rounded-full hover:bg-panel-alt transition-colors"
             title="Close"
           >
-            <HugeiconsIcon :icon="Cancel01Icon" :size="18" class="text-gray-600" />
+            <HugeiconsIcon :icon="Cancel01Icon" :size="18" class="text-subtle" />
           </button>
         </div>
       </div>
 
       <!-- Content -->
-      <div class="flex-1 overflow-auto flex items-center justify-center bg-gray-50 p-4">
-        <div v-if="loading" class="text-gray-400 text-sm">Loading preview...</div>
+      <div class="flex-1 overflow-auto flex items-center justify-center bg-panel-alt p-4">
+        <div v-if="loading" class="text-muted text-sm">Loading preview...</div>
         <div v-else-if="error" class="text-red-500 text-sm">{{ error }}</div>
 
         <!-- Image -->
@@ -145,13 +145,13 @@ onUnmounted(() => document.removeEventListener('keydown', handleKeydown))
 
         <!-- Audio -->
         <div v-else-if="previewType === 'audio'" class="w-full max-w-lg">
-          <div class="bg-white rounded-xl p-8 shadow-sm text-center">
-            <div class="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg class="w-10 h-10 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="bg-panel rounded-xl p-8 shadow-sm text-center">
+            <div class="w-20 h-20 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg class="w-10 h-10 text-purple-500 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
               </svg>
             </div>
-            <p class="text-sm font-medium text-gray-700 mb-4">{{ fileName }}</p>
+            <p class="text-sm font-medium text-body mb-4">{{ fileName }}</p>
             <audio :src="objectUrl" controls class="w-full" />
           </div>
         </div>
@@ -167,16 +167,16 @@ onUnmounted(() => document.removeEventListener('keydown', handleKeydown))
         <div
           v-else-if="previewType === 'document'"
           ref="docContainer"
-          class="w-full h-full overflow-auto bg-white rounded-lg border border-gray-200"
+          class="w-full h-full overflow-auto bg-panel rounded-lg border border-divider"
         />
 
         <!-- Text -->
         <pre
           v-else-if="previewType === 'text'"
-          class="w-full h-full overflow-auto bg-white rounded-lg p-5 text-sm text-gray-800 font-mono border border-gray-200"
+          class="w-full h-full overflow-auto bg-panel rounded-lg p-5 text-sm text-heading font-mono border border-divider"
         >{{ textContent }}</pre>
 
-        <div v-else class="text-gray-400 text-sm">Preview not available for this file type</div>
+        <div v-else class="text-muted text-sm">Preview not available for this file type</div>
       </div>
     </div>
   </div>
