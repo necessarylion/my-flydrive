@@ -243,8 +243,8 @@ function formatSize(bytes?: number) {
     @drop="handleDrop"
   >
     <!-- Breadcrumbs -->
-    <div class="flex items-center justify-between px-6 h-12 border-b border-gray-100">
-      <div class="flex items-center text-sm">
+    <div class="flex items-center justify-between px-3 md:px-6 h-12 border-b border-gray-100 gap-2">
+      <div class="flex items-center text-sm min-w-0 overflow-x-auto">
         <template v-if="filesStore.isSearching">
           <span class="text-gray-500">Search results for "</span>
           <span class="font-medium text-gray-900">{{ filesStore.searchQuery }}</span>
@@ -262,7 +262,7 @@ function formatSize(bytes?: number) {
           </button>
         </template>
       </div>
-      <div class="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
+      <div class="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5 shrink-0">
           <button
             @click="viewMode = 'list'"
             class="p-1.5 rounded-md transition-colors"
@@ -283,7 +283,7 @@ function formatSize(bytes?: number) {
     </div>
 
     <!-- New folder inline input -->
-    <div v-if="showNewFolder" class="flex items-center gap-2 px-6 py-2 bg-blue-50 border-b border-blue-100">
+    <div v-if="showNewFolder" class="flex flex-wrap items-center gap-2 px-3 md:px-6 py-2 bg-blue-50 border-b border-blue-100">
       <HugeiconsIcon :icon="Folder01Icon" :size="20" class="text-blue-500" />
       <input
         v-model="newFolderName"
@@ -306,11 +306,11 @@ function formatSize(bytes?: number) {
     <div v-else-if="viewMode === 'list'" class="flex-1 overflow-y-auto">
       <table class="w-full mt-2">
         <thead>
-          <tr class="text-xs text-gray-500 font-medium">
-            <th class="text-left pl-6 pr-4 py-2">Name</th>
-            <th class="text-left px-4 py-2 w-40">Last modified</th>
-            <th class="text-left px-4 py-2 w-28">File size</th>
-            <th class="w-20 pr-6"></th>
+          <tr class="text-xs text-gray-500">
+            <th class="text-left pl-3 md:pl-6 pr-4 py-2">Name</th>
+            <th class="text-left px-4 py-2 w-40 hidden md:table-cell">Last modified</th>
+            <th class="text-left px-4 py-2 w-28 hidden sm:table-cell">Size</th>
+            <th class="w-12 md:w-20 pr-2 md:pr-6"></th>
           </tr>
         </thead>
         <tbody>
@@ -320,14 +320,14 @@ function formatSize(bytes?: number) {
             class="hover:bg-[#f8fafd] cursor-pointer border-b border-gray-50"
             @click="filesStore.navigateUp()"
           >
-            <td class="pl-6 pr-4 py-2">
+            <td class="pl-3 md:pl-6 pr-4 py-2">
               <div class="flex items-center gap-3">
                 <HugeiconsIcon :icon="ArrowTurnBackwardIcon" :size="18" class="text-gray-400" />
                 <span class="text-sm text-gray-500">..</span>
               </div>
             </td>
-            <td></td>
-            <td></td>
+            <td class="hidden md:table-cell"></td>
+            <td class="hidden sm:table-cell"></td>
             <td></td>
           </tr>
 
@@ -339,19 +339,19 @@ function formatSize(bytes?: number) {
             @click="handleClick(item)"
             @contextmenu="handleContextMenu($event, item)"
           >
-            <td class="pl-6 pr-4 py-2">
+            <td class="pl-3 md:pl-6 pr-4 py-2">
               <div class="flex items-center gap-3">
                 <HugeiconsIcon
                   v-if="item.isDirectory"
                   :icon="Folder01Icon"
                   :size="20"
-                  class="text-gray-500"
+                  class="text-gray-500 shrink-0"
                 />
                 <HugeiconsIcon
                   v-else
                   :icon="getFileIcon(item.name)"
                   :size="20"
-                  :class="getFileIconColor(item.name)"
+                  :class="[getFileIconColor(item.name), 'shrink-0']"
                 />
                 <input
                   v-if="renameTarget?.path === item.path"
@@ -362,13 +362,13 @@ function formatSize(bytes?: number) {
                   @keyup.escape="renameTarget = null"
                   @blur="handleRename"
                 />
-                <span v-else class="text-sm text-gray-800">{{ item.name }}</span>
+                <span v-else class="text-sm text-gray-800 break-all line-clamp-2" :title="item.name">{{ item.name }}</span>
               </div>
             </td>
-            <td class="px-4 py-2 text-xs text-gray-500">{{ formatDate(item.lastModified) }}</td>
-            <td class="px-4 py-2 text-xs text-gray-500">{{ item.isDirectory ? '\u2014' : formatSize(item.size) }}</td>
-            <td class="pr-6 py-2" @click.stop>
-              <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <td class="px-4 py-2 text-xs text-gray-500 hidden md:table-cell">{{ formatDate(item.lastModified) }}</td>
+            <td class="px-4 py-2 text-xs text-gray-500 hidden sm:table-cell">{{ item.isDirectory ? '\u2014' : formatSize(item.size) }}</td>
+            <td class="pr-2 md:pr-6 py-2" @click.stop>
+              <div class="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                 <button
                   v-if="!item.isDirectory"
                   @click="filesStore.download(item.path)"
@@ -399,7 +399,7 @@ function formatSize(bytes?: number) {
     </div>
 
     <!-- Grid view -->
-    <div v-else class="flex-1 overflow-y-auto p-6">
+    <div v-else class="flex-1 overflow-y-auto p-3 md:p-6">
       <!-- Go up -->
       <div
         v-if="filesStore.currentPath"
@@ -410,7 +410,7 @@ function formatSize(bytes?: number) {
         ..
       </div>
 
-      <div class="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-3">
+      <div class="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2 md:gap-3">
         <div
           v-for="item in filesStore.files"
           :key="item.path"
@@ -465,7 +465,7 @@ function formatSize(bytes?: number) {
             @keyup.escape="renameTarget = null"
             @blur="handleRename"
           />
-          <span v-else class="text-xs text-gray-700 text-center w-full truncate" :title="item.name">{{ item.name }}</span>
+          <span v-else class="text-xs text-gray-700 text-center w-full break-all line-clamp-2" :title="item.name">{{ item.name }}</span>
         </div>
       </div>
 
@@ -500,7 +500,7 @@ function formatSize(bytes?: number) {
     >
       <div
         v-if="filesStore.uploads.length"
-        class="fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden"
+        class="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 z-50 md:w-80 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden"
       >
         <div class="px-4 py-2.5 bg-gray-50 border-b border-gray-100 text-sm font-medium text-gray-700">
           Uploading {{ filesStore.uploads.length }} file{{ filesStore.uploads.length > 1 ? 's' : '' }}

@@ -65,10 +65,10 @@ function getDriveIconBg(type: string) {
 </script>
 
 <template>
-  <div class="p-8 max-w-4xl">
-    <div class="flex items-center justify-between mb-8">
+  <div class="p-4 md:p-8 max-w-4xl">
+    <div class="flex items-center justify-between mb-6 md:mb-8">
       <div>
-        <h1 class="text-2xl font-semibold text-gray-900">Drive Configuration</h1>
+        <h1 class="text-xl md:text-2xl font-semibold text-gray-900">Drive Configuration</h1>
         <p class="text-sm text-gray-500 mt-1">Manage your storage providers</p>
       </div>
       <button
@@ -113,7 +113,7 @@ function getDriveIconBg(type: string) {
           </span>
         </div>
 
-        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div class="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
           <router-link
             :to="`/files/${drive.id}`"
             class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

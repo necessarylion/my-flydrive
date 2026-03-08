@@ -100,7 +100,7 @@ onUnmounted(() => document.removeEventListener('keydown', handleKeydown))
 
 <template>
   <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" @click.self="emit('close')">
-    <div class="bg-white rounded-2xl shadow-2xl w-[90vw] max-w-5xl h-[85vh] flex flex-col overflow-hidden">
+    <div class="bg-white rounded-2xl shadow-2xl w-[95vw] md:w-[90vw] max-w-5xl h-[90vh] md:h-[85vh] flex flex-col overflow-hidden">
       <!-- Header -->
       <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100 shrink-0">
         <h3 class="text-sm font-medium text-gray-900 truncate">{{ fileName }}</h3>
