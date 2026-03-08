@@ -132,10 +132,42 @@ watch(() => filesStore.currentPath, (path) => {
 
 async function handleUpload(e: Event) {
   const target = e.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (!file) return
-  await filesStore.upload(file)
+  const files = target.files
+  if (!files?.length) return
+  await filesStore.uploadMultiple(Array.from(files))
   target.value = ''
+}
+
+const isDragging = ref(false)
+let dragCounter = 0
+
+function handleDragEnter(e: DragEvent) {
+  e.preventDefault()
+  dragCounter++
+  if (e.dataTransfer?.types.includes('Files')) {
+    isDragging.value = true
+  }
+}
+
+function handleDragLeave(e: DragEvent) {
+  e.preventDefault()
+  dragCounter--
+  if (dragCounter === 0) {
+    isDragging.value = false
+  }
+}
+
+function handleDragOver(e: DragEvent) {
+  e.preventDefault()
+}
+
+async function handleDrop(e: DragEvent) {
+  e.preventDefault()
+  dragCounter = 0
+  isDragging.value = false
+  const files = e.dataTransfer?.files
+  if (!files?.length) return
+  await filesStore.uploadMultiple(Array.from(files))
 }
 
 async function handleCreateFolder() {
@@ -203,7 +235,13 @@ function formatSize(bytes?: number) {
 </script>
 
 <template>
-  <div class="flex flex-col h-full font-sans">
+  <div
+    class="flex flex-col h-full font-sans relative"
+    @dragenter="handleDragEnter"
+    @dragleave="handleDragLeave"
+    @dragover="handleDragOver"
+    @drop="handleDrop"
+  >
     <!-- Breadcrumbs -->
     <div class="flex items-center justify-between px-6 h-12 border-b border-gray-100">
       <div class="flex items-center text-sm">
@@ -438,7 +476,18 @@ function formatSize(bytes?: number) {
       </div>
     </div>
 
-    <input ref="fileInput" type="file" class="hidden" @change="handleUpload" />
+    <input ref="fileInput" type="file" multiple class="hidden" @change="handleUpload" />
+
+    <!-- Drag overlay -->
+    <div
+      v-if="isDragging"
+      class="absolute inset-0 bg-blue-50/80 border-2 border-dashed border-blue-400 rounded-lg z-50 flex items-center justify-center pointer-events-none"
+    >
+      <div class="text-center">
+        <HugeiconsIcon :icon="File01Icon" :size="48" class="text-blue-400 mx-auto mb-2" />
+        <p class="text-blue-600 font-medium">Drop files here to upload</p>
+      </div>
+    </div>
 
     <!-- File Preview Modal -->
     <FilePreview

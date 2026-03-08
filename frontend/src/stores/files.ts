@@ -27,6 +27,11 @@ export const useFilesStore = defineStore("files", () => {
     await fetchFiles(currentDriveId.value, currentPath.value);
   }
 
+  async function uploadMultiple(files: File[]) {
+    await Promise.all(files.map((f) => uploadFile(currentDriveId.value, f, currentPath.value)));
+    await fetchFiles(currentDriveId.value, currentPath.value);
+  }
+
   function triggerBlobDownload(blob: Blob, filename: string) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -96,5 +101,5 @@ export const useFilesStore = defineStore("files", () => {
     fetchFiles(currentDriveId.value, parts.join("/"));
   }
 
-  return { files, currentPath, loading, currentDriveId, searchQuery, isSearching, fetchFiles, upload, download, downloadFolder, rename, remove, addFolder, search, clearSearch, navigateTo, navigateUp };
+  return { files, currentPath, loading, currentDriveId, searchQuery, isSearching, fetchFiles, upload, uploadMultiple, download, downloadFolder, rename, remove, addFolder, search, clearSearch, navigateTo, navigateUp };
 });

@@ -50,10 +50,11 @@ function handleUpload() {
   showMenu.value = false
   const input = document.createElement('input')
   input.type = 'file'
+  input.multiple = true
   input.onchange = async () => {
-    const file = input.files?.[0]
-    if (file && filesStore.currentDriveId) {
-      await filesStore.upload(file)
+    const files = input.files
+    if (files?.length && filesStore.currentDriveId) {
+      await filesStore.uploadMultiple(Array.from(files))
     }
   }
   input.click()
