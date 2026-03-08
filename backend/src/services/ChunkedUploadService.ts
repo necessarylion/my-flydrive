@@ -1,9 +1,10 @@
+import { Service } from "typedi";
 import { join } from "node:path";
 import { mkdir, rm, appendFile } from "node:fs/promises";
 import { createReadStream } from "node:fs";
 import { AzureDriver } from "flydrive-azure";
 import type { DriveConfig, AzureConfig } from "../types/drive";
-import type { StorageService } from "./StorageService";
+import { StorageService } from "./StorageService";
 
 function sanitizeFileName(name: string): string {
   return name.replace(/[^A-Za-z0-9\-_!.\s]/g, "_");
@@ -25,6 +26,7 @@ interface LocalUploadState {
 
 type UploadState = AzureUploadState | LocalUploadState;
 
+@Service()
 export class ChunkedUploadService {
   private uploads = new Map<string, UploadState>();
 
@@ -97,9 +99,9 @@ export class ChunkedUploadService {
               const chunkBytes = await Bun.file(join(dir, String(i))).arrayBuffer();
               await appendFile(mergedPath, Buffer.from(chunkBytes));
             }
-            const disk = this.storageService.createDisk(driveConfig);
+            const drive = this.storageService.createDrive(driveConfig);
             const stream = createReadStream(mergedPath);
-            await disk.putStream(state.filePath, stream);
+            await drive.putStream(state.filePath, stream);
           } finally {
             await rm(dir, { recursive: true, force: true }).catch(() => {});
           }

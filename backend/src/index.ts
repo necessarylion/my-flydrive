@@ -1,30 +1,32 @@
+import "./container"; // must be first - registers DI tokens
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { bodyLimit } from "hono/body-limit";
 import { jwtMiddleware } from "./middleware/auth";
 import { securityHeaders } from "./middleware/security";
 import { loginRateLimiter } from "./middleware/rateLimiter";
-import { authController, driveController, fileController } from "./container";
+import { publicRoutes as authPublicRoutes, protectedRoutes as authProtectedRoutes } from "./routes/auth";
+import api from "./routes/api";
 
 const app = new Hono();
 
 // Security headers on all responses
 app.use("*", securityHeaders);
 
-app.use("/api/files/*/upload", bodyLimit({ maxSize: 10 * 1024 * 1024 * 1024 })); // 10GB
-
 // Public routes
 app.get("/health", (c) => c.json({ status: "ok" }));
+app.route("/api/auth", authPublicRoutes);
+
+// middlewares
+app.use("/api/files/*/upload", bodyLimit({ maxSize: 10 * 1024 * 1024 * 1024 })); // 10GB
 app.use("/api/auth/login", loginRateLimiter);
-app.route("/api/auth", authController.publicRoutes);
 
 // All /api/* routes require JWT
 app.use("/api/*", jwtMiddleware);
 
 // Protected routes
-app.route("/api/auth", authController.protectedRoutes);
-app.route("/api/drives", driveController.routes);
-app.route("/api/files", fileController.routes);
+app.route("/api/auth", authProtectedRoutes);
+app.route("/api", api);
 
 // Serve frontend static files in production
 app.use("/*", serveStatic({ root: "./public" }));

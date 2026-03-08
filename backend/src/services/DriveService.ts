@@ -1,5 +1,7 @@
+import { Inject, Service } from "typedi";
 import { v4 as uuid } from "uuid";
 import type { DriveConfig } from "../types/drive";
+import { DRIVE_STORE } from "../container";
 
 export interface IDriveStore {
   getDrives(): DriveConfig[];
@@ -9,8 +11,9 @@ export interface IDriveStore {
   deleteDrive(id: string): boolean;
 }
 
+@Service()
 export class DriveService {
-  constructor(private store: IDriveStore) {}
+  constructor(private store: IDriveStore = DRIVE_STORE) {}
 
   listAll(): Omit<DriveConfig, "config">[] {
     return this.store.getDrives().map(({ config, ...rest }) => rest);

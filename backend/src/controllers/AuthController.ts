@@ -1,21 +1,11 @@
-import { Hono } from "hono";
+import { Inject, Service } from "typedi";
 import { sign } from "hono/jwt";
 import { timingSafeEqual } from "node:crypto";
+import { ADMIN_EMAIL, ADMIN_PASSWORD, JWT_SECRET } from "../container";
 
+@Service()
 export class AuthController {
-  readonly publicRoutes = new Hono();
-  readonly protectedRoutes = new Hono();
-
-  constructor(
-    private adminEmail: string,
-    private adminPassword: string,
-    private jwtSecret: string,
-  ) {
-    this.publicRoutes.post("/login", this.login.bind(this));
-    this.protectedRoutes.get("/me", this.me.bind(this));
-  }
-
-  private async login(c: any) {
+  async login(c: any) {
     let body: { email?: string; password?: string };
     try {
       body = await c.req.json();
@@ -28,14 +18,14 @@ export class AuthController {
       return c.json({ error: "Email and password are required" }, 400);
     }
 
-    if (!this.timingSafeCompare(email, this.adminEmail) ||
-        !this.timingSafeCompare(password, this.adminPassword)) {
+    if (!this.timingSafeCompare(email, ADMIN_EMAIL) ||
+        !this.timingSafeCompare(password, ADMIN_PASSWORD)) {
       return c.json({ error: "Invalid credentials" }, 401);
     }
 
     const token = await sign(
       { email, exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 },
-      this.jwtSecret,
+      JWT_SECRET,
     );
 
     return c.json({ token });
@@ -46,7 +36,6 @@ export class AuthController {
     const bufA = encoder.encode(a);
     const bufB = encoder.encode(b);
     if (bufA.byteLength !== bufB.byteLength) {
-      // Still do a comparison to avoid timing leak on length difference
       const dummy = encoder.encode(b);
       timingSafeEqual(dummy, dummy);
       return false;
@@ -54,7 +43,7 @@ export class AuthController {
     return timingSafeEqual(bufA, bufB);
   }
 
-  private async me(c: any) {
+  async me(c: any) {
     const payload = c.get("jwtPayload");
     return c.json({ email: payload?.email });
   }

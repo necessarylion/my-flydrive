@@ -1,9 +1,10 @@
+import { Service } from "typedi";
 import { PassThrough } from "node:stream";
 import archiver from "archiver";
-import type { Disk } from "flydrive";
+import type { Disk as Drive } from "flydrive";
 import type { FileItem } from "../types/drive";
-import type { DriveService } from "./DriveService";
-import type { StorageService } from "./StorageService";
+import { DriveService } from "./DriveService";
+import { StorageService } from "./StorageService";
 
 function sanitizeFileName(name: string): string {
   return name.replace(/[^A-Za-z0-9\-_!.\s]/g, "_");
@@ -24,52 +25,53 @@ const MIME_MAP: Record<string, string> = {
 
 const MAX_PREVIEW_SIZE = 200 * 1024 * 1024;
 
+@Service()
 export class FileService {
   constructor(
     private driveService: DriveService,
     private storageService: StorageService,
   ) {}
 
-  getDisk(driveId: string): Disk | null {
+  getDrive(driveId: string): Drive | null {
     const drive = this.driveService.getById(driveId);
     if (!drive) return null;
-    return this.storageService.createDisk(drive);
+    return this.storageService.createDrive(drive);
   }
 
-  async listFiles(disk: Disk, prefix: string): Promise<{ path: string; items: FileItem[] }> {
-    const listing = await disk.listAll(prefix, { recursive: false });
+  async listFiles(drive: Drive, prefix: string): Promise<{ path: string; items: FileItem[] }> {
+    const listing = await drive.listAll(prefix, { recursive: false });
     const { items, metaPromises } = this.mapListingToFileItems(listing.objects);
     await Promise.all(metaPromises);
     return { path: prefix, items };
   }
 
-  async upload(disk: Disk, targetPath: string, file: File): Promise<string> {
+  async upload(drive: Drive, targetPath: string, file: File): Promise<string> {
     const safeName = sanitizeFileName(file.name);
     const filePath = targetPath ? `${targetPath}/${safeName}` : safeName;
     const buffer = await file.arrayBuffer();
-    await disk.put(filePath, new Uint8Array(buffer));
+    await drive.put(filePath, new Uint8Array(buffer));
     return filePath;
   }
 
-  async download(disk: Disk, filePath: string): Promise<{ bytes: Uint8Array; fileName: string }> {
-    const bytes = await disk.getBytes(filePath);
+  async download(drive: Drive, filePath: string): Promise<{ bytes: Uint8Array; fileName: string }> {
+    const bytes = await drive.getBytes(filePath);
     const fileName = filePath.split("/").pop() || "file";
     return { bytes, fileName };
   }
 
-  async preview(disk: Disk, filePath: string): Promise<{ bytes: Uint8Array; contentType: string }> {
-    const meta = await disk.getMetaData(filePath);
+  async preview(drive: Drive, filePath: string): Promise<{ bytes: Uint8Array; contentType: string }> {
+    const meta = await drive.getMetaData(filePath);
     if (meta.contentLength > MAX_PREVIEW_SIZE) {
       throw new PreviewTooLargeError();
     }
-    const bytes = await disk.getBytes(filePath);
+    const bytes = await drive.getBytes(filePath);
     const ext = filePath.split(".").pop()?.toLowerCase() || "";
     const contentType = MIME_MAP[ext] || meta.contentType || "application/octet-stream";
     return { bytes, contentType };
   }
 
-  async downloadFolder(disk: Disk, folderPath: string): Promise<{ stream: PassThrough; folderName: string }> {
-    const listing = await disk.listAll(folderPath, { recursive: true });
+  async downloadFolder(drive: Drive, folderPath: string): Promise<{ stream: PassThrough; folderName: string }> {
+    const listing = await drive.listAll(folderPath, { recursive: true });
     const fileObjects = this.getFileObjects(listing.objects);
 
     if (fileObjects.length === 0) {
@@ -86,7 +88,7 @@ export class FileService {
 
     for (const file of fileObjects) {
       const f = file as unknown as { key: string };
-      const bytes = await disk.getBytes(f.key);
+      const bytes = await drive.getBytes(f.key);
       const nameInZip = folderPath
         ? f.key.slice(folderPath.length).replace(/^\//, "")
         : f.key;
@@ -97,35 +99,35 @@ export class FileService {
     return { stream: passthrough, folderName };
   }
 
-  async deleteItem(disk: Disk, filePath: string, isDirectory: boolean): Promise<void> {
+  async deleteItem(drive: Drive, filePath: string, isDirectory: boolean): Promise<void> {
     if (isDirectory) {
-      await disk.deleteAll(filePath);
+      await drive.deleteAll(filePath);
     } else {
-      await disk.delete(filePath);
+      await drive.delete(filePath);
     }
   }
 
-  async createFolder(disk: Disk, folderPath: string): Promise<void> {
-    await disk.put(`${folderPath}/.keep`, new Uint8Array(0));
+  async createFolder(drive: Drive, folderPath: string): Promise<void> {
+    await drive.put(`${folderPath}/.keep`, new Uint8Array(0));
   }
 
-  async rename(disk: Disk, oldPath: string, newName: string, isDirectory: boolean): Promise<string> {
+  async rename(drive: Drive, oldPath: string, newName: string, isDirectory: boolean): Promise<string> {
     const parts = oldPath.split("/").filter(Boolean);
     parts[parts.length - 1] = newName;
     const newPath = parts.join("/");
     const isCaseOnlyRename = oldPath.toLowerCase() === newPath.toLowerCase() && oldPath !== newPath;
 
     if (isDirectory) {
-      await this.renameDirectory(disk, oldPath, newPath, isCaseOnlyRename);
+      await this.renameDirectory(drive, oldPath, newPath, isCaseOnlyRename);
     } else {
-      await this.renameFile(disk, oldPath, newPath, isCaseOnlyRename);
+      await this.renameFile(drive, oldPath, newPath, isCaseOnlyRename);
     }
 
     return newPath;
   }
 
-  private async renameDirectory(disk: Disk, oldPath: string, newPath: string, isCaseOnly: boolean) {
-    const listing = await disk.listAll(oldPath, { recursive: true });
+  private async renameDirectory(drive: Drive, oldPath: string, newPath: string, isCaseOnly: boolean) {
+    const listing = await drive.listAll(oldPath, { recursive: true });
     const fileItems = this.getFileObjects(listing.objects);
 
     if (isCaseOnly) {
@@ -133,37 +135,37 @@ export class FileService {
       for (const file of fileItems) {
         const f = file as unknown as { key: string };
         const relativePath = f.key.slice(oldPath.length);
-        const bytes = await disk.getBytes(f.key);
+        const bytes = await drive.getBytes(f.key);
         fileBuffers.push({ relativePath, data: bytes });
       }
-      await disk.deleteAll(oldPath);
+      await drive.deleteAll(oldPath);
       for (const { relativePath, data } of fileBuffers) {
-        await disk.put(newPath + relativePath, data);
+        await drive.put(newPath + relativePath, data);
       }
     } else {
       for (const file of fileItems) {
         const f = file as unknown as { key: string };
         const relativePath = f.key.slice(oldPath.length);
-        await disk.move(f.key, newPath + relativePath);
+        await drive.move(f.key, newPath + relativePath);
       }
-      try { await disk.deleteAll(oldPath); } catch (err) {
+      try { await drive.deleteAll(oldPath); } catch (err) {
         console.warn("Failed to clean up old directory after rename:", oldPath);
       }
     }
   }
 
-  private async renameFile(disk: Disk, oldPath: string, newPath: string, isCaseOnly: boolean) {
+  private async renameFile(drive: Drive, oldPath: string, newPath: string, isCaseOnly: boolean) {
     if (isCaseOnly) {
-      const bytes = await disk.getBytes(oldPath);
-      await disk.delete(oldPath);
-      await disk.put(newPath, bytes);
+      const bytes = await drive.getBytes(oldPath);
+      await drive.delete(oldPath);
+      await drive.put(newPath, bytes);
     } else {
-      await disk.move(oldPath, newPath);
+      await drive.move(oldPath, newPath);
     }
   }
 
-  async search(disk: Disk, query: string): Promise<FileItem[]> {
-    const listing = await disk.listAll("", { recursive: true });
+  async search(drive: Drive, query: string): Promise<FileItem[]> {
+    const listing = await drive.listAll("", { recursive: true });
     const lowerQuery = query.toLowerCase();
     const nameFilter = (name: string) => name.toLowerCase().includes(lowerQuery);
     const { items, metaPromises } = this.mapListingToFileItems(listing.objects, nameFilter);

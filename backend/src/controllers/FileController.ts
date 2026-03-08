@@ -1,54 +1,25 @@
-import { Hono } from "hono";
-import type { Context, Next } from "hono";
-import type { Disk } from "flydrive";
+import { Service } from "typedi";
+import type { Context } from "hono";
+import type { Disk as Drive } from "flydrive";
 import { FileService, PreviewTooLargeError, EmptyFolderError } from "../services/FileService";
-import type { ChunkedUploadService } from "../services/ChunkedUploadService";
+import { ChunkedUploadService } from "../services/ChunkedUploadService";
 import type { DriveConfig } from "../types/drive";
-import type { DriveService } from "../services/DriveService";
 import { assertSafePath, PathTraversalError, sanitizeContentDisposition, safeErrorMessage } from "../utils/validation";
 
-type DiskEnv = { Variables: { disk: Disk; driveConfig: DriveConfig } };
+export type DriveEnv = { Variables: { drive: Drive; driveConfig: DriveConfig } };
 
+@Service()
 export class FileController {
-  readonly routes = new Hono<DiskEnv>();
-
   constructor(
     private fileService: FileService,
     private chunkedUploadService: ChunkedUploadService,
-    private driveService: DriveService,
-  ) {
-    this.routes.use("/:driveId/*", this.resolveDisk.bind(this));
-    this.routes.use("/:driveId", this.resolveDisk.bind(this));
+  ) {}
 
-    this.routes.get("/:driveId/list", this.list.bind(this));
-    this.routes.post("/:driveId/upload", this.upload.bind(this));
-    this.routes.post("/:driveId/upload-chunk", this.uploadChunk.bind(this));
-    this.routes.post("/:driveId/upload-complete", this.uploadComplete.bind(this));
-    this.routes.get("/:driveId/download", this.download.bind(this));
-    this.routes.get("/:driveId/preview", this.preview.bind(this));
-    this.routes.get("/:driveId/download-folder", this.downloadFolder.bind(this));
-    this.routes.delete("/:driveId", this.remove.bind(this));
-    this.routes.post("/:driveId/folder", this.createFolder.bind(this));
-    this.routes.patch("/:driveId/rename", this.rename.bind(this));
-    this.routes.get("/:driveId/search", this.search.bind(this));
-  }
-
-  private async resolveDisk(c: Context<DiskEnv>, next: Next) {
-    const driveId = c.req.param("driveId") as string;
-    const driveConfig = this.driveService.getById(driveId);
-    if (!driveConfig) return c.json({ error: "Drive not found" }, 404);
-    const disk = this.fileService.getDisk(driveId);
-    if (!disk) return c.json({ error: "Drive not found" }, 404);
-    c.set("disk", disk);
-    c.set("driveConfig", driveConfig);
-    await next();
-  }
-
-  private async list(c: Context<DiskEnv>) {
+  async list(c: Context<DriveEnv>) {
     const prefix = c.req.query("path") || "";
     try {
       if (prefix) assertSafePath(prefix);
-      const result = await this.fileService.listFiles(c.get("disk"), prefix);
+      const result = await this.fileService.listFiles(c.get("drive"), prefix);
       return c.json(result);
     } catch (err: any) {
       if (err instanceof PathTraversalError) return c.json({ error: err.message }, 400);
@@ -56,7 +27,7 @@ export class FileController {
     }
   }
 
-  private async upload(c: Context<DiskEnv>) {
+  async upload(c: Context<DriveEnv>) {
     const targetPath = c.req.query("path") || "";
     try {
       if (targetPath) assertSafePath(targetPath);
@@ -64,7 +35,7 @@ export class FileController {
       const file = formData.get("file") as File | null;
       if (!file) return c.json({ error: "No file provided" }, 400);
 
-      const filePath = await this.fileService.upload(c.get("disk"), targetPath, file);
+      const filePath = await this.fileService.upload(c.get("drive"), targetPath, file);
       return c.json({ message: "File uploaded", path: filePath }, 201);
     } catch (err: any) {
       if (err instanceof PathTraversalError) return c.json({ error: err.message }, 400);
@@ -72,7 +43,7 @@ export class FileController {
     }
   }
 
-  private async uploadChunk(c: Context<DiskEnv>) {
+  async uploadChunk(c: Context<DriveEnv>) {
     try {
       const targetPath = c.req.query("path") || "";
       if (targetPath) assertSafePath(targetPath);
@@ -101,7 +72,7 @@ export class FileController {
     }
   }
 
-  private async uploadComplete(c: Context<DiskEnv>) {
+  async uploadComplete(c: Context<DriveEnv>) {
     let body: any;
     try {
       body = await c.req.json();
@@ -126,13 +97,13 @@ export class FileController {
     }
   }
 
-  private async download(c: Context<DiskEnv>) {
+  async download(c: Context<DriveEnv>) {
     const filePath = c.req.query("path");
     if (!filePath) return c.json({ error: "Path is required" }, 400);
 
     try {
       assertSafePath(filePath);
-      const { bytes, fileName } = await this.fileService.download(c.get("disk"), filePath);
+      const { bytes, fileName } = await this.fileService.download(c.get("drive"), filePath);
       return new Response(bytes, {
         headers: {
           "Content-Type": "application/octet-stream",
@@ -145,13 +116,13 @@ export class FileController {
     }
   }
 
-  private async preview(c: Context<DiskEnv>) {
+  async preview(c: Context<DriveEnv>) {
     const filePath = c.req.query("path");
     if (!filePath) return c.json({ error: "Path is required" }, 400);
 
     try {
       assertSafePath(filePath);
-      const { bytes, contentType } = await this.fileService.preview(c.get("disk"), filePath);
+      const { bytes, contentType } = await this.fileService.preview(c.get("drive"), filePath);
       return new Response(bytes, {
         headers: {
           "Content-Type": contentType,
@@ -165,11 +136,11 @@ export class FileController {
     }
   }
 
-  private async downloadFolder(c: Context<DiskEnv>) {
+  async downloadFolder(c: Context<DriveEnv>) {
     const folderPath = c.req.query("path") || "";
     try {
       if (folderPath) assertSafePath(folderPath);
-      const { stream, folderName } = await this.fileService.downloadFolder(c.get("disk"), folderPath);
+      const { stream, folderName } = await this.fileService.downloadFolder(c.get("drive"), folderPath);
       return new Response(stream as any, {
         headers: {
           "Content-Type": "application/zip",
@@ -183,14 +154,14 @@ export class FileController {
     }
   }
 
-  private async remove(c: Context<DiskEnv>) {
+  async remove(c: Context<DriveEnv>) {
     const filePath = c.req.query("path");
     const isDirectory = c.req.query("isDirectory") === "true";
     if (!filePath) return c.json({ error: "Path is required" }, 400);
 
     try {
       assertSafePath(filePath);
-      await this.fileService.deleteItem(c.get("disk"), filePath, isDirectory);
+      await this.fileService.deleteItem(c.get("drive"), filePath, isDirectory);
       return c.json({ message: isDirectory ? "Folder deleted" : "File deleted" });
     } catch (err: any) {
       if (err instanceof PathTraversalError) return c.json({ error: err.message }, 400);
@@ -198,7 +169,7 @@ export class FileController {
     }
   }
 
-  private async createFolder(c: Context<DiskEnv>) {
+  async createFolder(c: Context<DriveEnv>) {
     let body: any;
     try {
       body = await c.req.json();
@@ -213,7 +184,7 @@ export class FileController {
 
     try {
       assertSafePath(folderPath);
-      await this.fileService.createFolder(c.get("disk"), folderPath);
+      await this.fileService.createFolder(c.get("drive"), folderPath);
       return c.json({ message: "Folder created", path: folderPath }, 201);
     } catch (err: any) {
       if (err instanceof PathTraversalError) return c.json({ error: err.message }, 400);
@@ -221,7 +192,7 @@ export class FileController {
     }
   }
 
-  private async rename(c: Context<DiskEnv>) {
+  async rename(c: Context<DriveEnv>) {
     let body: any;
     try {
       body = await c.req.json();
@@ -237,7 +208,7 @@ export class FileController {
 
     try {
       assertSafePath(oldPath);
-      const newPath = await this.fileService.rename(c.get("disk"), oldPath, newName, isDirectory);
+      const newPath = await this.fileService.rename(c.get("drive"), oldPath, newName, isDirectory);
       return c.json({ message: "Renamed successfully", oldPath, newPath });
     } catch (err: any) {
       if (err instanceof PathTraversalError) return c.json({ error: err.message }, 400);
@@ -245,12 +216,12 @@ export class FileController {
     }
   }
 
-  private async search(c: Context<DiskEnv>) {
+  async search(c: Context<DriveEnv>) {
     const query = c.req.query("q");
     if (!query) return c.json({ error: "Query parameter 'q' is required" }, 400);
 
     try {
-      const items = await this.fileService.search(c.get("disk"), query);
+      const items = await this.fileService.search(c.get("drive"), query);
       return c.json({ query, items });
     } catch (err: any) {
       return c.json({ error: safeErrorMessage(err) }, 500);
