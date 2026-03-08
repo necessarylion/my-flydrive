@@ -58,10 +58,47 @@ export const deleteDrive = (id: string) => api.delete(`/drives/${id}`);
 export const listFiles = (driveId: string, path = "") =>
   api.get<{ path: string; items: FileItem[] }>(`/files/${driveId}/list`, { params: { path } });
 
-export const uploadFile = (driveId: string, file: File, path = "") => {
-  const form = new FormData();
-  form.append("file", file);
-  return api.post(`/files/${driveId}/upload`, form, { params: { path } });
+const CHUNK_SIZE = 50 * 1024 * 1024; // 50MB
+
+export const uploadFile = async (driveId: string, file: File, path = "", onProgress?: (progress: number) => void, onProcessing?: () => void) => {
+  // Small files: direct upload
+  if (file.size <= CHUNK_SIZE) {
+    const form = new FormData();
+    form.append("file", file);
+    return api.post(`/files/${driveId}/upload`, form, {
+      params: { path },
+      onUploadProgress: (e) => {
+        if (onProgress && e.total) {
+          onProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      },
+    });
+  }
+
+  // Large files: chunked upload
+  const uploadId = crypto.randomUUID();
+  const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+
+  for (let i = 0; i < totalChunks; i++) {
+    const start = i * CHUNK_SIZE;
+    const chunk = file.slice(start, start + CHUNK_SIZE);
+    const form = new FormData();
+    form.append("chunk", chunk);
+    form.append("uploadId", uploadId);
+    form.append("chunkIndex", String(i));
+    form.append("fileName", file.name);
+    await api.post(`/files/${driveId}/upload-chunk`, form, { params: { path } });
+    if (onProgress) {
+      onProgress(Math.round(((i + 1) / totalChunks) * 100));
+    }
+  }
+
+  onProcessing?.();
+  return api.post(`/files/${driveId}/upload-complete`, {
+    uploadId,
+    fileName: file.name,
+    totalChunks,
+  }, { params: { path } });
 };
 
 export const downloadFile = (driveId: string, path: string) =>

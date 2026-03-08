@@ -2,18 +2,27 @@ import { Hono } from "hono";
 import type { Context, Next } from "hono";
 import type { Disk } from "flydrive";
 import { FileService, PreviewTooLargeError, EmptyFolderError } from "../services/FileService";
+import type { ChunkedUploadService } from "../services/ChunkedUploadService";
+import type { DriveConfig } from "../types/drive";
+import type { DriveService } from "../services/DriveService";
 
-type DiskEnv = { Variables: { disk: Disk } };
+type DiskEnv = { Variables: { disk: Disk; driveConfig: DriveConfig } };
 
 export class FileController {
   readonly routes = new Hono<DiskEnv>();
 
-  constructor(private fileService: FileService) {
+  constructor(
+    private fileService: FileService,
+    private chunkedUploadService: ChunkedUploadService,
+    private driveService: DriveService,
+  ) {
     this.routes.use("/:driveId/*", this.resolveDisk.bind(this));
     this.routes.use("/:driveId", this.resolveDisk.bind(this));
 
     this.routes.get("/:driveId/list", this.list.bind(this));
     this.routes.post("/:driveId/upload", this.upload.bind(this));
+    this.routes.post("/:driveId/upload-chunk", this.uploadChunk.bind(this));
+    this.routes.post("/:driveId/upload-complete", this.uploadComplete.bind(this));
     this.routes.get("/:driveId/download", this.download.bind(this));
     this.routes.get("/:driveId/preview", this.preview.bind(this));
     this.routes.get("/:driveId/download-folder", this.downloadFolder.bind(this));
@@ -25,9 +34,12 @@ export class FileController {
 
   private async resolveDisk(c: Context<DiskEnv>, next: Next) {
     const driveId = c.req.param("driveId") as string;
+    const driveConfig = this.driveService.getById(driveId);
+    if (!driveConfig) return c.json({ error: "Drive not found" }, 404);
     const disk = this.fileService.getDisk(driveId);
     if (!disk) return c.json({ error: "Drive not found" }, 404);
     c.set("disk", disk);
+    c.set("driveConfig", driveConfig);
     await next();
   }
 
@@ -50,6 +62,43 @@ export class FileController {
       if (!file) return c.json({ error: "No file provided" }, 400);
 
       const filePath = await this.fileService.upload(c.get("disk"), targetPath, file);
+      return c.json({ message: "File uploaded", path: filePath }, 201);
+    } catch (err: any) {
+      return c.json({ error: err.message }, 500);
+    }
+  }
+
+  private async uploadChunk(c: Context<DiskEnv>) {
+    try {
+      const targetPath = c.req.query("path") || "";
+      const formData = await c.req.formData();
+      const chunk = formData.get("chunk") as File | null;
+      const uploadId = formData.get("uploadId") as string;
+      const chunkIndex = formData.get("chunkIndex") as string;
+      const fileName = formData.get("fileName") as string;
+      if (!chunk || !uploadId || chunkIndex == null || !fileName) {
+        return c.json({ error: "chunk, uploadId, chunkIndex, and fileName are required" }, 400);
+      }
+      const buffer = Buffer.from(await chunk.arrayBuffer());
+      await this.chunkedUploadService.stageChunk(
+        c.get("driveConfig"), uploadId, parseInt(chunkIndex), buffer, fileName, targetPath,
+      );
+      return c.json({ message: "Chunk uploaded" });
+    } catch (err: any) {
+      return c.json({ error: err.message }, 500);
+    }
+  }
+
+  private async uploadComplete(c: Context<DiskEnv>) {
+    try {
+      const body = await c.req.json();
+      const { uploadId, totalChunks } = body;
+      if (!uploadId || !totalChunks) {
+        return c.json({ error: "uploadId and totalChunks are required" }, 400);
+      }
+      const filePath = await this.chunkedUploadService.complete(
+        c.get("driveConfig"), uploadId, totalChunks,
+      );
       return c.json({ message: "File uploaded", path: filePath }, 201);
     } catch (err: any) {
       return c.json({ error: err.message }, 500);

@@ -12,7 +12,7 @@
         "@hono/zod-openapi": "^1.2.2",
         "archiver": "^7.0.1",
         "flydrive": "^2.0.0",
-        "flydrive-azure": "1.0.0-alpha.3",
+        "flydrive-azure": "1.0.0-alpha.4",
         "hono": "^4.12.5",
         "uuid": "^13.0.0",
         "zod": "^4.3.6",
@@ -426,7 +426,7 @@
 
     "flydrive": ["flydrive@2.0.0", "", { "dependencies": { "@humanwhocodes/retry": "^0.4.3", "@poppinss/utils": "^7.0.0-next.6", "etag": "^1.8.1", "mime-types": "^3.0.2" }, "peerDependencies": { "@aws-sdk/client-s3": "^3.577.0", "@aws-sdk/s3-request-presigner": "^3.577.0", "@google-cloud/storage": "^7.10.2" }, "optionalPeers": ["@aws-sdk/client-s3", "@aws-sdk/s3-request-presigner", "@google-cloud/storage"] }, "sha512-Q0tO6297z4I/8XSPp01ZOXpaSO+nsPbo2VGpRmHauQxFVJow0B6Od7QWcbsTpqL79+Kh/G/D1O8p4nxMPxc7uA=="],
 
-    "flydrive-azure": ["flydrive-azure@1.0.0-alpha.3", "", { "dependencies": { "@azure/identity": "^4.7.0", "@azure/storage-blob": "^12.26.0" } }, "sha512-SZPy/90gLyzEgETGc7w5gPbN4FcgWbzxNbyUW+vT8HzcORPfwMptYD+u+7kAZerX/LT/Kxj9p4ZlCb78I3doyA=="],
+    "flydrive-azure": ["flydrive-azure@1.0.0-alpha.4", "", { "dependencies": { "@azure/identity": "^4.7.0", "@azure/storage-blob": "^12.26.0" } }, "sha512-68eQiEswsjZsGy/CnsE0fSWTeLTH5zLm3Ct3QGv2aTemmxj+37+2sTHVQfyZbVcrSv/YBYToVtGzW/AN4I5nlg=="],
 
     "foreground-child": ["foreground-child@3.3.1", "", { "dependencies": { "cross-spawn": "^7.0.6", "signal-exit": "^4.0.1" } }, "sha512-gIXjKqtFuWEgzFRJA9WCQeSJLZDjgJUOMCMzxtvFq/37KojM1BFGufqsCy0r4qSQmYLsZYMeyRqzIWOMup03sw=="],
 

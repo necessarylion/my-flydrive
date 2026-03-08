@@ -1,9 +1,12 @@
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
+import { bodyLimit } from "hono/body-limit";
 import { jwtMiddleware } from "./middleware/auth";
 import { authController, driveController, fileController } from "./container";
 
 const app = new Hono();
+
+app.use("/api/files/*/upload", bodyLimit({ maxSize: 10 * 1024 * 1024 * 1024 })); // 10GB
 
 // Public routes
 app.get("/health", (c) => c.json({ status: "ok" }));
@@ -24,4 +27,5 @@ app.get("/*", serveStatic({ root: "./public", path: "index.html" }));
 export default {
   port: 3000,
   fetch: app.fetch,
+  maxRequestBodySize: 10 * 1024 * 1024 * 1024, // 10GB
 };

@@ -489,6 +489,55 @@ function formatSize(bytes?: number) {
       </div>
     </div>
 
+    <!-- Upload progress -->
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="translate-y-4 opacity-0"
+      enter-to-class="translate-y-0 opacity-100"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="translate-y-0 opacity-100"
+      leave-to-class="translate-y-4 opacity-0"
+    >
+      <div
+        v-if="filesStore.uploads.length"
+        class="fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden"
+      >
+        <div class="px-4 py-2.5 bg-gray-50 border-b border-gray-100 text-sm font-medium text-gray-700">
+          Uploading {{ filesStore.uploads.length }} file{{ filesStore.uploads.length > 1 ? 's' : '' }}
+        </div>
+        <div class="max-h-48 overflow-y-auto">
+          <div v-for="(item, i) in filesStore.uploads" :key="i" class="px-4 py-2 border-b border-gray-50 last:border-0">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs text-gray-700 truncate flex-1 mr-2">{{ item.name }}</span>
+              <span
+                class="text-xs shrink-0"
+                :class="{
+                  'text-red-500': item.status === 'error',
+                  'text-green-500': item.status === 'done',
+                  'text-amber-500': item.status === 'processing',
+                  'text-gray-400': item.status === 'uploading',
+                }"
+              >
+                {{ item.status === 'error' ? 'Failed' : item.status === 'done' ? 'Done' : item.status === 'processing' ? 'Saving to cloud...' : item.progress + '%' }}
+              </span>
+            </div>
+            <div class="h-1 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                class="h-full rounded-full transition-all duration-300"
+                :class="{
+                  'bg-red-400': item.status === 'error',
+                  'bg-green-400': item.status === 'done',
+                  'bg-amber-400 animate-pulse': item.status === 'processing',
+                  'bg-blue-500': item.status === 'uploading',
+                }"
+                :style="{ width: item.status === 'processing' ? '100%' : item.progress + '%' }"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <!-- File Preview Modal -->
     <FilePreview
       v-if="previewFile"

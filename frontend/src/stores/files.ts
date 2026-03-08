@@ -10,6 +10,13 @@ export const useFilesStore = defineStore("files", () => {
   const searchQuery = ref("");
   const isSearching = ref(false);
 
+  interface UploadItem {
+    name: string;
+    progress: number;
+    status: "uploading" | "processing" | "done" | "error";
+  }
+  const uploads = ref<UploadItem[]>([]);
+
   async function fetchFiles(driveId: string, path = "") {
     loading.value = true;
     currentDriveId.value = driveId;
@@ -28,8 +35,33 @@ export const useFilesStore = defineStore("files", () => {
   }
 
   async function uploadMultiple(files: File[]) {
-    await Promise.all(files.map((f) => uploadFile(currentDriveId.value, f, currentPath.value)));
+    const startIdx = uploads.value.length;
+    uploads.value.push(...files.map((f) => ({ name: f.name, progress: 0, status: "uploading" as const })));
+
+    await Promise.all(
+      files.map(async (f, i) => {
+        const idx = startIdx + i;
+        const item = uploads.value[idx];
+        if (!item) return;
+        try {
+          await uploadFile(
+            currentDriveId.value, f, currentPath.value,
+            (p) => { item.progress = p; },
+            () => { item.status = "processing"; },
+          );
+          item.status = "done";
+          item.progress = 100;
+        } catch {
+          item.status = "error";
+        }
+      })
+    );
+
     await fetchFiles(currentDriveId.value, currentPath.value);
+
+    setTimeout(() => {
+      uploads.value = uploads.value.filter((u) => u.status === "uploading" || u.status === "processing");
+    }, 2000);
   }
 
   function triggerBlobDownload(blob: Blob, filename: string) {
@@ -101,5 +133,5 @@ export const useFilesStore = defineStore("files", () => {
     fetchFiles(currentDriveId.value, parts.join("/"));
   }
 
-  return { files, currentPath, loading, currentDriveId, searchQuery, isSearching, fetchFiles, upload, uploadMultiple, download, downloadFolder, rename, remove, addFolder, search, clearSearch, navigateTo, navigateUp };
+  return { files, currentPath, loading, currentDriveId, searchQuery, isSearching, uploads, fetchFiles, upload, uploadMultiple, download, downloadFolder, rename, remove, addFolder, search, clearSearch, navigateTo, navigateUp };
 });

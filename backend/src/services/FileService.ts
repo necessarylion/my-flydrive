@@ -5,6 +5,10 @@ import type { FileItem } from "../types/drive";
 import type { DriveService } from "./DriveService";
 import type { StorageService } from "./StorageService";
 
+function sanitizeFileName(name: string): string {
+  return name.replace(/[^A-Za-z0-9\-_!.\s]/g, "_");
+}
+
 const MIME_MAP: Record<string, string> = {
   jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", gif: "image/gif",
   webp: "image/webp", svg: "image/svg+xml", bmp: "image/bmp", ico: "image/x-icon",
@@ -40,7 +44,8 @@ export class FileService {
   }
 
   async upload(disk: Disk, targetPath: string, file: File): Promise<string> {
-    const filePath = targetPath ? `${targetPath}/${file.name}` : file.name;
+    const safeName = sanitizeFileName(file.name);
+    const filePath = targetPath ? `${targetPath}/${safeName}` : safeName;
     const buffer = await file.arrayBuffer();
     await disk.put(filePath, new Uint8Array(buffer));
     return filePath;
