@@ -5,6 +5,7 @@ import { createReadStream } from 'node:fs';
 import { AzureDriver } from 'flydrive-azure';
 import type { DriveConfig, AzureConfig } from '../types/drive';
 import { StorageService } from './StorageService';
+import { CHUNKS_DIR, DriveType } from '../constants';
 
 /**
  * Sanitizes a file name by replacing characters that are not alphanumeric,
@@ -16,15 +17,12 @@ function sanitizeFileName(name: string): string {
   return name.replace(/[^A-Za-z0-9\-_!.\s]/g, '_');
 }
 
-/** Temporary directory path where local chunks are staged before being merged. */
-const CHUNKS_DIR = join(import.meta.dir, '../../tmp/chunks');
-
 /**
  * Tracks the state of an in-progress Azure chunked upload.
  * Uses Azure block blob API to stage individual blocks and commit them.
  */
 interface AzureUploadState {
-  type: 'azure';
+  type: DriveType.Azure;
   /** The target file path in the storage container. */
   filePath: string;
   /** Maps chunk indices to their base64-encoded block IDs. */
@@ -38,7 +36,7 @@ interface AzureUploadState {
  * Chunks are written to a temporary directory and merged on completion.
  */
 interface LocalUploadState {
-  type: 'local';
+  type: DriveType.Local;
   /** The target file path in the local storage root. */
   filePath: string;
 }
@@ -73,7 +71,7 @@ export class ChunkedUploadService {
     fileName: string,
     targetPath: string,
   ): Promise<void> {
-    if (driveConfig.type !== 'azure' && driveConfig.type !== 'local') {
+    if (driveConfig.type !== DriveType.Azure && driveConfig.type !== DriveType.Local) {
       throw new Error(
         'Chunked upload is only supported for Azure and Local drives. Please use smaller files for other drive types.',
       );
@@ -89,13 +87,13 @@ export class ChunkedUploadService {
     }
 
     switch (state.type) {
-      case 'azure': {
+      case DriveType.Azure: {
         const blockId = Buffer.from(String(chunkIndex).padStart(6, '0')).toString('base64');
         await state.driver.putBlock(state.filePath, blockId, data, data.length);
         state.blockIds.set(chunkIndex, blockId);
         break;
       }
-      case 'local': {
+      case DriveType.Local: {
         const dir = join(CHUNKS_DIR, uploadId);
         await mkdir(dir, { recursive: true });
         await Bun.write(join(dir, String(chunkIndex)), data);
@@ -124,7 +122,7 @@ export class ChunkedUploadService {
 
     try {
       switch (state.type) {
-        case 'azure': {
+        case DriveType.Azure: {
           const blockIds: string[] = [];
           for (let i = 0; i < totalChunks; i++) {
             const blockId = state.blockIds.get(i);
@@ -134,7 +132,7 @@ export class ChunkedUploadService {
           await state.driver.commitBlockList(state.filePath, blockIds);
           return state.filePath;
         }
-        case 'local': {
+        case DriveType.Local: {
           const dir = join(CHUNKS_DIR, uploadId);
           const mergedPath = join(dir, '_merged');
           try {
@@ -165,16 +163,16 @@ export class ChunkedUploadService {
    */
   private createState(driveConfig: DriveConfig, filePath: string): UploadState {
     switch (driveConfig.type) {
-      case 'azure': {
+      case DriveType.Azure: {
         const cfg = driveConfig.config as AzureConfig;
         const driver = new AzureDriver({
           connectionString: cfg.connectionString,
           container: cfg.container,
         });
-        return { type: 'azure', filePath, blockIds: new Map(), driver };
+        return { type: DriveType.Azure, filePath, blockIds: new Map(), driver };
       }
-      case 'local':
-        return { type: 'local', filePath };
+      case DriveType.Local:
+        return { type: DriveType.Local, filePath };
       default:
         throw new Error('Unsupported drive type for chunked upload');
     }

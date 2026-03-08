@@ -1,4 +1,5 @@
 import { z } from 'zod/v4';
+import { DriveType } from '../constants';
 
 /**
  * Validates that a file path doesn't contain path traversal sequences.
@@ -86,7 +87,7 @@ const azureConfigSchema = z.object({
 });
 
 /** Zod schema for the supported storage provider types. */
-export const driveTypeSchema = z.enum(['local', 's3', 'gcs', 'azure']);
+export const driveTypeSchema = z.enum([DriveType.Local, DriveType.S3, DriveType.GCS, DriveType.Azure]);
 
 /**
  * Zod schema for creating a new drive.
@@ -104,16 +105,16 @@ export const createDriveSchema = z
     // Validate config based on type
     let config;
     switch (data.type) {
-      case 'local':
+      case DriveType.Local:
         config = localConfigSchema.parse(data.config);
         break;
-      case 's3':
+      case DriveType.S3:
         config = s3ConfigSchema.parse(data.config);
         break;
-      case 'gcs':
+      case DriveType.GCS:
         config = gcsConfigSchema.parse(data.config);
         break;
-      case 'azure':
+      case DriveType.Azure:
         config = azureConfigSchema.parse(data.config);
         break;
     }

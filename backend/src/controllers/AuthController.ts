@@ -1,7 +1,7 @@
 import { Service } from 'typedi';
 import { sign } from 'hono/jwt';
 import { timingSafeEqual } from 'node:crypto';
-import { ADMIN_EMAIL, ADMIN_PASSWORD, JWT_SECRET } from '../container';
+import { ADMIN_EMAIL, ADMIN_PASSWORD, JWT_SECRET } from '../constants';
 
 @Service()
 export class AuthController {

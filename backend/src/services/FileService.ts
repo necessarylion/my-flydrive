@@ -6,6 +6,7 @@ import type { Disk as Drive } from 'flydrive';
 import type { FileItem } from '../types/drive';
 import { DriveService } from './DriveService';
 import { StorageService } from './StorageService';
+import { MAX_PREVIEW_SIZE, HIDDEN_FILES } from '../constants';
 
 /**
  * Sanitizes a file name by replacing characters that are not alphanumeric,
@@ -16,9 +17,6 @@ import { StorageService } from './StorageService';
 function sanitizeFileName(name: string): string {
   return name.replace(/[^A-Za-z0-9\-_!.\s]/g, '_');
 }
-
-/** Maximum file size allowed for preview, in bytes (200 MB). */
-const MAX_PREVIEW_SIZE = 200 * 1024 * 1024;
 
 @Service()
 export class FileService {
@@ -299,7 +297,7 @@ export class FileService {
 
     for (const item of objects) {
       if (item.isFile) {
-        if (item.name === '.keep') continue;
+        if (HIDDEN_FILES.has(item.name)) continue;
         if (filter && !filter(item.name)) continue;
         const fileItem: FileItem = { name: item.name, path: item.key, isDirectory: false };
         items.push(fileItem);
@@ -327,7 +325,7 @@ export class FileService {
    * @returns An array of file objects with `.keep` files removed.
    */
   private getFileObjects(objects: Iterable<any>) {
-    return [...objects].filter((item) => item.isFile && item.name !== '.keep');
+    return [...objects].filter((item) => item.isFile && !HIDDEN_FILES.has(item.name));
   }
 }
 

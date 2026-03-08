@@ -6,6 +6,7 @@ import { GCSDriver } from 'flydrive/drivers/gcs';
 import { AzureDriver } from 'flydrive-azure';
 
 import type { DriveConfig, LocalConfig, S3Config, GCSConfig, AzureConfig } from '../types/drive';
+import { DriveType } from '../constants';
 
 @Service()
 export class StorageService {
@@ -24,11 +25,11 @@ export class StorageService {
    */
   createDrive(driveConfig: DriveConfig): Drive {
     switch (driveConfig.type) {
-      case 'local': {
+      case DriveType.Local: {
         const cfg = driveConfig.config as LocalConfig;
         return new Drive(new FSDriver({ location: cfg.root, visibility: 'public' }));
       }
-      case 's3': {
+      case DriveType.S3: {
         const cfg = driveConfig.config as S3Config;
         return new Drive(
           new S3Driver({
@@ -40,7 +41,7 @@ export class StorageService {
           }),
         );
       }
-      case 'gcs': {
+      case DriveType.GCS: {
         const cfg = driveConfig.config as GCSConfig;
         return new Drive(
           new GCSDriver({
@@ -50,7 +51,7 @@ export class StorageService {
           }),
         );
       }
-      case 'azure': {
+      case DriveType.Azure: {
         const cfg = driveConfig.config as AzureConfig;
         return new Drive(
           new AzureDriver({ connectionString: cfg.connectionString, container: cfg.container }),

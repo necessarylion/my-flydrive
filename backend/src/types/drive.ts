@@ -1,11 +1,4 @@
-/**
- * Supported storage provider types.
- * - `"local"` -- Local filesystem storage.
- * - `"s3"` -- AWS S3 or S3-compatible storage.
- * - `"gcs"` -- Google Cloud Storage.
- * - `"azure"` -- Azure Blob Storage.
- */
-export type DriveType = 'local' | 's3' | 'gcs' | 'azure';
+import { DriveType } from '../constants';
 
 /**
  * Represents a configured storage drive, including its provider-specific settings

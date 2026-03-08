@@ -1,57 +1,18 @@
 import { Service } from 'typedi';
 import { v4 as uuid } from 'uuid';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import type { DriveConfig } from '../types/drive';
-import { DRIVE_STORE } from '../container';
-
-/**
- * Interface for the drive configuration persistence store.
- * Implementations handle reading and writing drive configs to a backing store
- * (e.g., JSON file, database).
- */
-export interface IDriveStore {
-  /** Retrieves all stored drive configurations. */
-  getDrives(): DriveConfig[];
-
-  /**
-   * Retrieves a single drive configuration by its unique identifier.
-   * @param id - The unique identifier of the drive.
-   * @returns The matching drive configuration, or `undefined` if not found.
-   */
-  getDriveById(id: string): DriveConfig | undefined;
-
-  /**
-   * Persists a new drive configuration to the store.
-   * @param drive - The complete drive configuration to add.
-   */
-  addDrive(drive: DriveConfig): void;
-
-  /**
-   * Updates an existing drive configuration with partial changes.
-   * @param id - The unique identifier of the drive to update.
-   * @param updates - A partial object containing the fields to update.
-   * @returns The updated drive configuration, or `null` if the drive was not found.
-   */
-  updateDrive(id: string, updates: Partial<DriveConfig>): DriveConfig | null;
-
-  /**
-   * Removes a drive configuration from the store.
-   * @param id - The unique identifier of the drive to delete.
-   * @returns `true` if the drive was found and deleted, `false` otherwise.
-   */
-  deleteDrive(id: string): boolean;
-}
+import { DATA_DIR, STORE_FILE } from '../constants';
 
 @Service()
 export class DriveService {
-  constructor(private store: IDriveStore = DRIVE_STORE) {}
-
   /**
    * Lists all drives with their provider-specific configuration stripped out.
    * This prevents sensitive credentials from being exposed in list responses.
    * @returns An array of drive configurations without the `config` field.
    */
   listAll(): Omit<DriveConfig, 'config'>[] {
-    return this.store.getDrives().map(({ config: _, ...rest }) => rest);
+    return this.readStore().map(({ config: _, ...rest }) => rest);
   }
 
   /**
@@ -60,16 +21,13 @@ export class DriveService {
    * @returns The full drive configuration, or `undefined` if not found.
    */
   getById(id: string): DriveConfig | undefined {
-    return this.store.getDriveById(id);
+    return this.readStore().find((d) => d.id === id);
   }
 
   /**
    * Creates a new drive configuration with an auto-generated ID and timestamps.
+   * If marked as default, all existing drives have their `isDefault` flag cleared.
    * @param body - The drive creation payload.
-   * @param body.name - Human-readable name for the drive.
-   * @param body.type - The storage provider type (e.g., "local", "s3", "gcs", "azure").
-   * @param body.isDefault - Whether this drive should be the default. Defaults to `false`.
-   * @param body.config - Provider-specific configuration (credentials, paths, etc.).
    * @returns The newly created drive configuration.
    */
   create(body: {
@@ -88,18 +46,57 @@ export class DriveService {
       createdAt: now,
       updatedAt: now,
     };
-    this.store.addDrive(drive);
+    const drives = this.readStore();
+    if (drive.isDefault) {
+      drives.forEach((d) => (d.isDefault = false));
+    }
+    drives.push(drive);
+    this.writeStore(drives);
     return drive;
   }
 
   /**
-   * Updates an existing drive configuration.
+   * Updates an existing drive configuration with partial changes.
+   * Performs a deep merge on the `config` property, ignoring null, undefined,
+   * and empty-string values. If `isDefault` is set to `true`, all other drives are cleared.
    * @param id - The unique identifier of the drive to update.
    * @param updates - A partial object with the fields to update.
-   * @returns The updated drive configuration, or `null` if the drive was not found.
+   * @returns The updated drive configuration, or `null` if not found.
    */
   update(id: string, updates: Partial<DriveConfig>): DriveConfig | null {
-    return this.store.updateDrive(id, updates);
+    const drives = this.readStore();
+    const idx = drives.findIndex((d) => d.id === id);
+    if (idx === -1) return null;
+
+    if (updates.isDefault) {
+      drives.forEach((d) => (d.isDefault = false));
+    }
+
+    const existing = drives[idx]!;
+
+    let mergedConfig = existing.config;
+    if (updates.config) {
+      const cleaned: Record<string, any> = {};
+      for (const [key, value] of Object.entries(updates.config)) {
+        if (value != null && value !== '') {
+          cleaned[key] = value;
+        }
+      }
+      mergedConfig = { ...existing.config, ...cleaned };
+    }
+
+    const updated: DriveConfig = {
+      id: existing.id,
+      name: updates.name ?? existing.name,
+      type: updates.type ?? existing.type,
+      isDefault: updates.isDefault ?? existing.isDefault,
+      config: mergedConfig,
+      createdAt: existing.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    drives[idx] = updated;
+    this.writeStore(drives);
+    return updated;
   }
 
   /**
@@ -108,6 +105,37 @@ export class DriveService {
    * @returns `true` if the drive was found and deleted, `false` otherwise.
    */
   delete(id: string): boolean {
-    return this.store.deleteDrive(id);
+    const drives = this.readStore();
+    const filtered = drives.filter((d) => d.id !== id);
+    if (filtered.length === drives.length) return false;
+    this.writeStore(filtered);
+    return true;
+  }
+
+  /**
+   * Reads all drive configurations from the JSON store file.
+   * Creates the data directory if it doesn't exist.
+   */
+  private readStore(): DriveConfig[] {
+    this.ensureDataDir();
+    if (!existsSync(STORE_FILE)) return [];
+    const raw = readFileSync(STORE_FILE, 'utf-8');
+    return JSON.parse(raw);
+  }
+
+  /**
+   * Writes the given drive configurations to the JSON store file.
+   * @param drives - The complete array of drive configurations to persist.
+   */
+  private writeStore(drives: DriveConfig[]): void {
+    this.ensureDataDir();
+    writeFileSync(STORE_FILE, JSON.stringify(drives, null, 2));
+  }
+
+  /** Ensures the data directory exists, creating it if necessary. */
+  private ensureDataDir(): void {
+    if (!existsSync(DATA_DIR)) {
+      mkdirSync(DATA_DIR, { recursive: true });
+    }
   }
 }

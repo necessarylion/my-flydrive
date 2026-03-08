@@ -1,14 +1,12 @@
-import './container'; // must be first - registers DI tokens
+import 'reflect-metadata';
 import { Hono } from 'hono';
 import { serveStatic } from 'hono/bun';
 import { bodyLimit } from 'hono/body-limit';
 import { jwtMiddleware } from './middleware/auth';
 import { securityHeaders } from './middleware/security';
 import { loginRateLimiter } from './middleware/rateLimiter';
-import {
-  publicRoutes as authPublicRoutes,
-  protectedRoutes as authProtectedRoutes,
-} from './routes/auth';
+import { authPublicRoutes, authProtectedRoutes } from './routes/auth';
+import { MAX_REQUEST_BODY_SIZE } from './constants';
 import api from './routes/api';
 
 const app = new Hono();
@@ -21,7 +19,7 @@ app.get('/health', (c) => c.json({ status: 'ok' }));
 app.route('/api/auth', authPublicRoutes);
 
 // middlewares
-app.use('/api/files/*/upload', bodyLimit({ maxSize: 10 * 1024 * 1024 * 1024 })); // 10GB
+app.use('/api/files/*/upload', bodyLimit({ maxSize: MAX_REQUEST_BODY_SIZE }));
 app.use('/api/auth/login', loginRateLimiter);
 
 // All /api/* routes require JWT
@@ -45,5 +43,5 @@ app.get('/*', serveStatic({ root: './public', path: 'index.html' }));
 export default {
   port: 3000,
   fetch: app.fetch,
-  maxRequestBodySize: 10 * 1024 * 1024 * 1024, // 10GB
+  maxRequestBodySize: MAX_REQUEST_BODY_SIZE,
 };
