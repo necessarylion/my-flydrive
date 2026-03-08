@@ -1,6 +1,7 @@
 import { Service } from "typedi";
 import { PassThrough } from "node:stream";
 import archiver from "archiver";
+import mime from "mime";
 import type { Disk as Drive } from "flydrive";
 import type { FileItem } from "../types/drive";
 import { DriveService } from "./DriveService";
@@ -9,19 +10,6 @@ import { StorageService } from "./StorageService";
 function sanitizeFileName(name: string): string {
   return name.replace(/[^A-Za-z0-9\-_!.\s]/g, "_");
 }
-
-const MIME_MAP: Record<string, string> = {
-  jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", gif: "image/gif",
-  webp: "image/webp", svg: "image/svg+xml", bmp: "image/bmp", ico: "image/x-icon",
-  mp4: "video/mp4", webm: "video/webm", ogv: "video/ogg", mov: "video/quicktime",
-  mp3: "audio/mpeg", wav: "audio/wav", ogg: "audio/ogg", aac: "audio/aac",
-  flac: "audio/flac", m4a: "audio/mp4",
-  pdf: "application/pdf",
-  doc: "application/msword",
-  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  txt: "text/plain", json: "application/json", xml: "text/xml",
-  csv: "text/csv", md: "text/plain", log: "text/plain",
-};
 
 const MAX_PREVIEW_SIZE = 200 * 1024 * 1024;
 
@@ -66,7 +54,7 @@ export class FileService {
     }
     const bytes = await drive.getBytes(filePath);
     const ext = filePath.split(".").pop()?.toLowerCase() || "";
-    const contentType = MIME_MAP[ext] || meta.contentType || "application/octet-stream";
+    const contentType = mime.getType(ext) || meta.contentType || "application/octet-stream";
     return { bytes, contentType };
   }
 
@@ -165,12 +153,22 @@ export class FileService {
   }
 
   async search(drive: Drive, query: string): Promise<FileItem[]> {
-    const listing = await drive.listAll("", { recursive: true });
     const lowerQuery = query.toLowerCase();
     const nameFilter = (name: string) => name.toLowerCase().includes(lowerQuery);
-    const { items, metaPromises } = this.mapListingToFileItems(listing.objects, nameFilter);
-    await Promise.all(metaPromises);
-    return items;
+    const allItems: FileItem[] = [];
+    const allMetaPromises: Promise<void>[] = [];
+
+    let paginationToken: string | undefined;
+    do {
+      const listing = await (drive as any).listAll("", { recursive: true, paginationToken });
+      const { items, metaPromises } = this.mapListingToFileItems(listing.objects, nameFilter);
+      allItems.push(...items);
+      allMetaPromises.push(...metaPromises);
+      paginationToken = listing.paginationToken;
+    } while (paginationToken);
+
+    await Promise.all(allMetaPromises);
+    return allItems;
   }
 
   private mapListingToFileItems(

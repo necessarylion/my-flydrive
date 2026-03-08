@@ -78,7 +78,7 @@ watch(() => route.path, () => {
       </button>
 
       <div class="flex items-center gap-2.5 md:w-60 shrink-0 mr-2 md:mr-0">
-        <img :src="appLogo" class="w-8 h-8 md:w-10 md:h-10 md:mx-2" alt="My FlyDrive" />
+        <img :src="appLogo" class="w-8 h-8 md:w-9 md:h-9 md:mx-2" alt="My FlyDrive" />
         <span class="hidden md:inline text-[26px] text-body font-medium tracking-tight font-['New_Amsterdam']">MY FLYDRIVE</span>
       </div>
 
