@@ -7,8 +7,8 @@ import { DriveController } from '../controllers/DriveController';
 const route = new Hono<DriveEnv>();
 
 route.get('drives', Controller(DriveController, 'list'));
+route.post('drives', Controller(DriveController, 'create'));
 route.get('drives/:id', Controller(DriveController, 'getById'));
-route.post('drives/', Controller(DriveController, 'create'));
 route.put('drives/:id', Controller(DriveController, 'update'));
 route.delete('drives/:id', Controller(DriveController, 'remove'));
 

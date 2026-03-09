@@ -48,7 +48,7 @@ const typeLabels: Record<string, string> = {
 
 const typeColors: Record<string, string> = {
   local: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  s3: 'bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+  s3: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
   gcs: 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300',
   azure: 'bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
 };
@@ -58,7 +58,7 @@ function getDriveIconBg(type: string) {
     case 'local':
       return 'bg-blue-100 dark:bg-blue-900/30';
     case 's3':
-      return 'bg-orange-100 dark:bg-orange-900/30';
+      return 'bg-amber-100 dark:bg-amber-900/30';
     case 'gcs':
       return 'bg-blue-50 dark:bg-blue-900/20';
     case 'azure':

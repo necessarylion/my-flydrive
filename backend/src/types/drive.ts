@@ -51,10 +51,6 @@ export interface S3Config {
 export interface GCSConfig {
   /** Name of the GCS bucket. */
   bucket: string;
-  /** Google Cloud project ID that owns the bucket. */
-  projectId: string;
-  /** Optional path to a service account key file for authentication. */
-  keyFilename?: string;
   /** Optional inline service account credentials as a JSON string. */
   credentials?: string;
 }

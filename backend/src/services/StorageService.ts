@@ -37,7 +37,7 @@ export class StorageService {
             region: cfg.region,
             bucket: cfg.bucket,
             ...(cfg.endpoint ? { endpoint: cfg.endpoint } : {}),
-            visibility: 'public',
+            visibility: 'private',
           }),
         );
       }
@@ -46,8 +46,8 @@ export class StorageService {
         return new Drive(
           new GCSDriver({
             bucket: cfg.bucket,
-            ...(cfg.keyFilename ? { keyFilename: cfg.keyFilename } : {}),
-            visibility: 'public',
+            ...(cfg.credentials ? { credentials: JSON.parse(cfg.credentials) } : {}),
+            visibility: 'private',
           }),
         );
       }

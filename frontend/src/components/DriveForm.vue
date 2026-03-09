@@ -20,8 +20,8 @@ const form = ref({
   secretAccessKey: '',
   endpoint: '',
   gcsBucket: '',
-  projectId: '',
-  keyFilename: '',
+  credentials: '',
+  keyFile: null as File | null,
   connectionString: '',
   container: '',
 });
@@ -44,8 +44,7 @@ watch(
         form.value.endpoint = cfg.endpoint || '';
       } else if (d.type === 'gcs') {
         form.value.gcsBucket = cfg.bucket || '';
-        form.value.projectId = cfg.projectId || '';
-        form.value.keyFilename = cfg.keyFilename || '';
+        form.value.credentials = cfg.credentials || '';
       } else if (d.type === 'azure') {
         form.value.connectionString = cfg.connectionString || '';
         form.value.container = cfg.container || '';
@@ -70,8 +69,7 @@ function buildConfig() {
     case 'gcs':
       return {
         bucket: form.value.gcsBucket,
-        projectId: form.value.projectId,
-        ...(form.value.keyFilename ? { keyFilename: form.value.keyFilename } : {}),
+        ...(form.value.credentials ? { credentials: form.value.credentials } : {}),
       };
     case 'azure':
       return {
@@ -90,6 +88,13 @@ async function handleSubmit() {
   error.value = '';
   saving.value = true;
   try {
+    // Read GCS keyfile content if provided
+    if (form.value.type === 'gcs' && form.value.keyFile) {
+      const content = await form.value.keyFile.text();
+      JSON.parse(content); // validate JSON, throws if invalid
+      form.value.credentials = content;
+    }
+
     const payload = {
       name: form.value.name,
       type: form.value.type,
@@ -233,21 +238,20 @@ async function handleSubmit() {
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-body mb-1">Project ID</label>
-                <input
-                  v-model="form.projectId"
-                  class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading"
-                />
-              </div>
-              <div>
                 <label class="block text-sm font-medium text-body mb-1"
-                  >Key Filename <span class="text-muted font-normal">(optional)</span></label
+                  >Service Account Key <span class="text-muted font-normal">(optional)</span></label
                 >
                 <input
-                  v-model="form.keyFilename"
-                  placeholder="/path/to/keyfile.json"
-                  class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading"
+                  type="file"
+                  accept=".json"
+                  @change="
+                    (e: Event) => (form.keyFile = (e.target as HTMLInputElement).files?.[0] ?? null)
+                  "
+                  class="w-full px-3 py-2 border border-input-border rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-input-bg text-heading file:mr-3 file:px-3 file:py-1 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 dark:file:bg-blue-900/30 dark:file:text-blue-300"
                 />
+                <p v-if="form.credentials && !form.keyFile" class="text-xs text-muted mt-1">
+                  Key file already configured. Upload a new one to replace it.
+                </p>
               </div>
             </div>
           </template>

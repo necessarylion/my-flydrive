@@ -92,6 +92,7 @@ export const uploadFile = async (
     form.append('chunk', chunk);
     form.append('uploadId', uploadId);
     form.append('chunkIndex', String(i));
+    form.append('totalChunks', String(totalChunks));
     form.append('fileName', file.name);
     await api.post(`/files/${driveId}/upload-chunk`, form, { params: { path } });
     if (onProgress) {

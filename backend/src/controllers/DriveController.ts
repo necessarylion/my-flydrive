@@ -1,4 +1,5 @@
 import { Service } from 'typedi';
+import type { Context } from 'hono';
 import { DriveService } from '../services/DriveService';
 import type { DriveConfig } from '../types/drive';
 import { createDriveSchema, updateDriveSchema } from '../utils/validation';
@@ -26,7 +27,7 @@ export class DriveController {
    * @param c - The Hono request context.
    * @returns A JSON response containing an array of all drives.
    */
-  list(c: any) {
+  list(c: Context) {
     return c.json(this.driveService.listAll());
   }
 
@@ -37,8 +38,9 @@ export class DriveController {
    * @returns A JSON response with the drive object (sans credentials),
    *   or a 404 error if the drive is not found.
    */
-  getById(c: any) {
-    const drive = this.driveService.getById(c.req.param('id'));
+  getById(c: Context) {
+    const id = c.req.param('id')!;
+    const drive = this.driveService.getById(id);
     if (!drive) return c.json({ error: 'Drive not found' }, 404);
     return c.json(stripCredentials(drive));
   }
@@ -53,7 +55,7 @@ export class DriveController {
    * @returns A JSON response with the created drive (status 201),
    *   or a 400 error if the body is invalid.
    */
-  async create(c: any) {
+  async create(c: Context) {
     let body: unknown;
     try {
       body = await c.req.json();
@@ -88,8 +90,8 @@ export class DriveController {
    * @returns A JSON response with the updated drive, or a 400 error if the body
    *   is invalid, or a 404 error if the drive is not found.
    */
-  async update(c: any) {
-    const id = c.req.param('id');
+  async update(c: Context) {
+    const id = c.req.param('id')!;
     let body: unknown;
     try {
       body = await c.req.json();
@@ -120,8 +122,8 @@ export class DriveController {
    * @returns A JSON response with a success message, or a 404 error
    *   if the drive is not found.
    */
-  remove(c: any) {
-    const id = c.req.param('id');
+  remove(c: Context) {
+    const id = c.req.param('id')!;
     const deleted = this.driveService.delete(id);
     if (!deleted) return c.json({ error: 'Drive not found' }, 404);
     return c.json({ message: 'Drive deleted' });

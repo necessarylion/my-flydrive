@@ -45,8 +45,12 @@ export class FileService {
    */
   async listFiles(drive: Drive, prefix: string): Promise<{ path: string; items: FileItem[] }> {
     const listing = await drive.listAll(prefix, { recursive: false });
-    const { items, metaPromises } = this.mapListingToFileItems(listing.objects);
+    const { items, metaPromises } = this.mapListingToFileItems(drive, listing.objects);
     await Promise.all(metaPromises);
+    items.sort((a, b) => {
+      if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
     return { path: prefix, items };
   }
 
@@ -270,7 +274,11 @@ export class FileService {
     let paginationToken: string | undefined;
     do {
       const listing = await (drive as any).listAll('', { recursive: true, paginationToken });
-      const { items, metaPromises } = this.mapListingToFileItems(listing.objects, nameFilter);
+      const { items, metaPromises } = this.mapListingToFileItems(
+        drive,
+        listing.objects,
+        nameFilter,
+      );
       allItems.push(...items);
       allMetaPromises.push(...metaPromises);
       paginationToken = listing.paginationToken;
@@ -289,6 +297,7 @@ export class FileService {
    * @returns An object containing the mapped items and an array of metadata promises to await.
    */
   private mapListingToFileItems(
+    drive: Drive,
     objects: Iterable<any>,
     filter?: (name: string) => boolean,
   ): { items: FileItem[]; metaPromises: Promise<void>[] } {
@@ -304,9 +313,11 @@ export class FileService {
         metaPromises.push(
           item
             .getMetaData()
-            .then((meta: any) => {
-              fileItem.size = meta.contentLength;
-              fileItem.lastModified = meta.lastModified.toISOString();
+            .then(async (meta: any) => {
+              if (meta.contentLength != null) {
+                fileItem.size = meta.contentLength;
+              }
+              fileItem.lastModified = meta.lastModified?.toISOString();
             })
             .catch(() => {}),
         );

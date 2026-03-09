@@ -75,8 +75,6 @@ const s3ConfigSchema = z.object({
 /** Zod schema for Google Cloud Storage drive configuration. */
 const gcsConfigSchema = z.object({
   bucket: z.string().min(1),
-  projectId: z.string().min(1),
-  keyFilename: z.string().optional(),
   credentials: z.string().optional(),
 });
 
@@ -87,7 +85,12 @@ const azureConfigSchema = z.object({
 });
 
 /** Zod schema for the supported storage provider types. */
-export const driveTypeSchema = z.enum([DriveType.Local, DriveType.S3, DriveType.GCS, DriveType.Azure]);
+export const driveTypeSchema = z.enum([
+  DriveType.Local,
+  DriveType.S3,
+  DriveType.GCS,
+  DriveType.Azure,
+]);
 
 /**
  * Zod schema for creating a new drive.

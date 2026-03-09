@@ -1,0 +1,16 @@
+diff --git a/node_modules/flydrive/.bun-tag-456f510ddcce2869 b/.bun-tag-456f510ddcce2869
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/build/drivers/s3/main.js b/build/drivers/s3/main.js
+index 284e5b65625ab39cb3c77889e91057e6f65c9047..3d5bf6ac43903297f8f053c476a2a83d2ebfaf6e 100644
+--- a/build/drivers/s3/main.js
++++ b/build/drivers/s3/main.js
+@@ -21,7 +21,7 @@ var S3Driver = class S3Driver {
+ 	#createFileMetaData(apiFile) {
+ 		const metaData = {
+ 			contentType: apiFile.ContentType,
+-			contentLength: apiFile.ContentLength,
++			contentLength: apiFile.ContentLength ?? apiFile.Size ?? 0,
+ 			etag: apiFile.ETag,
+ 			lastModified: new Date(apiFile.LastModified)
+ 		};

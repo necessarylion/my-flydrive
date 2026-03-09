@@ -38,6 +38,7 @@ export class FileController {
       const result = await this.fileService.listFiles(c.get('drive'), prefix);
       return c.json(result);
     } catch (err: any) {
+      console.error('[list]', err);
       if (err instanceof PathTraversalError) return c.json({ error: err.message }, 400);
       return c.json({ error: safeErrorMessage(err) }, 500);
     }
@@ -86,6 +87,7 @@ export class FileController {
       const chunk = formData.get('chunk') as File | null;
       const uploadId = formData.get('uploadId') as string;
       const chunkIndex = formData.get('chunkIndex') as string;
+      const totalChunksStr = formData.get('totalChunks') as string;
       const fileName = formData.get('fileName') as string;
       if (!chunk || !uploadId || chunkIndex == null || !fileName) {
         return c.json({ error: 'chunk, uploadId, chunkIndex, and fileName are required' }, 400);
@@ -95,6 +97,7 @@ export class FileController {
       if (isNaN(idx) || idx < 0 || idx > 10000) {
         return c.json({ error: 'Invalid chunkIndex' }, 400);
       }
+      const totalChunks = totalChunksStr ? parseInt(totalChunksStr) : undefined;
 
       const buffer = Buffer.from(await chunk.arrayBuffer());
       await this.chunkedUploadService.stageChunk(
@@ -104,6 +107,7 @@ export class FileController {
         buffer,
         fileName,
         targetPath,
+        totalChunks,
       );
       return c.json({ message: 'Chunk uploaded' });
     } catch (err: any) {
