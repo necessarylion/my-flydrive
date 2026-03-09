@@ -210,8 +210,10 @@ export class ChunkedUploadService {
           return state.filePath;
         }
         case DriveType.GCS: {
-          // Flush any remaining buffered chunks
           await this.flushGCSChunks(state, totalChunks);
+          if (state.nextChunkIndex < totalChunks) {
+            throw new Error(`Missing GCS chunk ${state.nextChunkIndex}`);
+          }
           return state.filePath;
         }
         case DriveType.Local: {
@@ -336,11 +338,6 @@ export class ChunkedUploadService {
 
       state.bytesUploaded += chunk.length;
       state.nextChunkIndex++;
-    }
-
-    // During complete(), verify all chunks were uploaded
-    if (totalChunks !== undefined && state.nextChunkIndex < totalChunks) {
-      throw new Error(`Missing GCS chunk ${state.nextChunkIndex}`);
     }
   }
 }
