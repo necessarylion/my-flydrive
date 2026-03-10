@@ -10,6 +10,7 @@ RUN bun run build-only
 FROM oven/bun:1 AS backend-deps
 WORKDIR /app/backend
 COPY backend/package.json backend/bun.lock ./
+COPY backend/patches ./patches
 RUN bun install --frozen-lockfile --production
 
 # Stage 3: Final image
